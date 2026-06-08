@@ -539,3 +539,27 @@ button, input, textarea { font: inherit; }
   .match-score { order: 2; width: 100%; }
   .match-team.away { order: 3; }
 }
+
+.match-update-panel {
+  margin-top: 18px;
+  display: grid;
+  gap: 6px;
+  background: rgba(255,255,255,.78);
+  border: 2px solid rgba(0,0,0,.08);
+  border-left: 8px solid var(--orange-dark);
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.05);
+}
+
+.match-update-panel strong {
+  font-family: ImpactFallback, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.match-update-panel span {
+  color: #555;
+  font-size: .92rem;
+}

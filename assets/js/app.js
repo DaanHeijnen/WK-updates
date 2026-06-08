@@ -319,6 +319,32 @@ if (page === 'admin-create') initCreate();
 if (page === 'admin-edit') initEdit();
 if (page === 'setup') initSetup();
 
+
+function formatLastUpdated(value) {
+  if (!value) return 'Nog niet bijgewerkt';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Onbekend';
+  const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (diffSeconds < 15) return 'zojuist bijgewerkt';
+  if (diffSeconds < 60) return `${diffSeconds} seconden geleden bijgewerkt`;
+  const minutes = Math.floor(diffSeconds / 60);
+  if (minutes < 60) return `${minutes} ${minutes === 1 ? 'minuut' : 'minuten'} geleden bijgewerkt`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? 'uur' : 'uur'} geleden bijgewerkt`;
+  const days = Math.floor(hours / 24);
+  return `${days} ${days === 1 ? 'dag' : 'dagen'} geleden bijgewerkt`;
+}
+
+function startLastUpdatedCounter(value) {
+  const box = $('#matches-updated-counter');
+  if (!box) return;
+  const render = () => {
+    box.textContent = `Scores ${formatLastUpdated(value)}`;
+  };
+  render();
+  window.setInterval(render, 30000);
+}
+
 function formatMatchDay(value) {
   return new Intl.DateTimeFormat('nl-NL', { weekday: 'long', day: '2-digit', month: 'long' }).format(new Date(value));
 }
@@ -376,6 +402,13 @@ async function initMatches() {
     const data = await request('/matches');
     const matches = data.matches || [];
     const todayKey = data.todayKey;
+    startLastUpdatedCounter(data.lastUpdatedAt || data.fetchedAt);
+    const sourceInfo = $('#matches-source-info');
+    if (sourceInfo) {
+      const warning = data.warning ? ` Laatst bekende data wordt getoond: ${data.warning}` : '';
+      sourceInfo.textContent = `${data.sourceLabel || 'WK scoreprovider'}${data.cached ? ' · uit cache' : ' · net opgehaald'}${warning}`;
+      sourceInfo.hidden = false;
+    }
     const today = matches.filter((match) => match.dateKey === todayKey);
     const played = matches.filter((match) => match.state === 'played' && match.dateKey !== todayKey).reverse();
     const upcoming = matches.filter((match) => match.state !== 'played' && match.dateKey !== todayKey);

@@ -118,45 +118,20 @@ De admin-link staat bewust nergens op de publieke website. De admin gebruikt zel
 ```
 
 
-## Wedstrijdenpagina met API-Football
+## Wedstrijden en uitslagen
 
-Deze versie bevat een extra publieke pagina:
+De pagina `/wedstrijden.html` gebruikt nu de gratis open-source WK 2026 API van `worldcup26.ir`.
+De backend haalt de data op via Netlify Function `matches.js` en gebruikt de bestaande `match_cache` tabel om data tijdelijk op te slaan.
 
-```txt
-/wedstrijden.html
-```
+Je hoeft geen API-key meer toe te voegen voor API-Football.
 
-Deze pagina toont gespeelde WK-wedstrijden bovenaan en komende wedstrijden onderaan. Wedstrijden van vandaag krijgen een aparte sectie. Bij het openen van de pagina springt de browser automatisch naar de eerste wedstrijd van vandaag die nog niet is afgelopen. Als alle wedstrijden van vandaag al gespeeld zijn, springt de pagina naar de wedstrijden van vandaag.
-
-### API-Football instellen
-
-Maak een account aan bij API-Football / API-SPORTS en haal je API key op. Voeg daarna in Netlify deze Environment variable toe:
+Optionele environment variables:
 
 ```txt
-API_FOOTBALL_KEY=je-api-key
-```
-
-De app gebruikt standaard deze instellingen:
-
-```txt
-API_FOOTBALL_LEAGUE=1
-API_FOOTBALL_SEASON=2026
-API_FOOTBALL_TIMEZONE=Europe/Amsterdam
+WORLD_CUP26_API_BASE=https://worldcup26.ir
+WORLD_CUP26_TOKEN=alleen nodig als de provider later toch een token vereist
+MATCH_TIMEZONE=Europe/Amsterdam
 MATCH_CACHE_MINUTES=30
 ```
 
-`league=1` en `season=2026` zijn bedoeld voor de FIFA World Cup 2026. Als je een andere competitie of seizoen wilt gebruiken, pas je deze environment variables aan in Netlify.
-
-Na het toevoegen van environment variables moet je de site opnieuw deployen.
-
-### Database-update voor wedstrijden
-
-De wedstrijden worden tijdelijk gecachet in de database, zodat je niet bij elke bezoeker direct een nieuwe API-call doet. De setup-functie maakt automatisch de tabel `match_cache` aan wanneer je `/setup.html` opnieuw gebruikt.
-
-Je kunt de tabel ook handmatig aanmaken met:
-
-```txt
-database/002_add_match_cache.sql
-```
-
-Bestaande updates en admin-gebruikers blijven behouden.
+De wedstrijdenpagina toont ook wanneer de scores voor het laatst zijn bijgewerkt.

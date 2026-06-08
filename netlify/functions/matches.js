@@ -1,20 +1,27 @@
 const { json, withDb } = require('./_shared');
 
-const finishedStatuses = new Set(['FT', 'AET', 'PEN']);
-const liveStatuses = new Set(['1H', 'HT', '2H', 'ET', 'BT', 'P', 'SUSP', 'INT', 'LIVE']);
+const DEFAULT_API_BASE = 'https://worldcup26.ir';
+const finishedValues = new Set(['true', '1', 'yes', 'finished', 'ft', 'fulltime', 'full_time', 'completed', 'afgelopen']);
+const liveValues = new Set(['live', 'in_play', 'playing', '1h', '2h', 'ht', 'et', 'pen', 'nu bezig']);
 
-function apiConfig() {
+function config() {
   return {
-    key: process.env.API_FOOTBALL_KEY || process.env.APIFOOTBALL_KEY || process.env.API_SPORTS_KEY,
-    league: process.env.API_FOOTBALL_LEAGUE || '1',
-    season: process.env.API_FOOTBALL_SEASON || '2026',
-    timezone: process.env.API_FOOTBALL_TIMEZONE || 'Europe/Amsterdam',
+    apiBase: (process.env.WORLD_CUP26_API_BASE || DEFAULT_API_BASE).replace(/\/$/, ''),
+    token: process.env.WORLD_CUP26_TOKEN || process.env.WORLDCUP26_TOKEN || '',
+    timezone: process.env.MATCH_TIMEZONE || 'Europe/Amsterdam',
     cacheMinutes: Number(process.env.MATCH_CACHE_MINUTES || 30)
   };
 }
 
+function headers(cfg) {
+  const base = { Accept: 'application/json' };
+  if (cfg.token) base.Authorization = `Bearer ${cfg.token}`;
+  return base;
+}
+
 function localDateKey(dateValue, timezone) {
   const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return '';
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
     year: 'numeric',
@@ -25,34 +32,136 @@ function localDateKey(dateValue, timezone) {
   return `${map.year}-${map.month}-${map.day}`;
 }
 
-function normalizeFixture(item, timezone) {
-  const statusShort = item.fixture?.status?.short || 'TBD';
-  const statusLong = item.fixture?.status?.long || '';
-  const homeGoals = item.goals?.home;
-  const awayGoals = item.goals?.away;
-  const elapsed = item.fixture?.status?.elapsed;
-  let state = 'upcoming';
-  if (finishedStatuses.has(statusShort)) state = 'played';
-  else if (liveStatuses.has(statusShort)) state = 'live';
+function parseWorldCupDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const text = String(value).trim();
+
+  const usMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/.exec(text);
+  if (usMatch) {
+    const [, month, day, year, hour, minute] = usMatch;
+    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), 0));
+  }
+
+  const isoLike = new Date(text);
+  return Number.isNaN(isoLike.getTime()) ? null : isoLike;
+}
+
+function asArray(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.response)) return payload.response;
+  if (Array.isArray(payload?.games)) return payload.games;
+  if (Array.isArray(payload?.matches)) return payload.matches;
+  if (Array.isArray(payload?.result)) return payload.result;
+  return [];
+}
+
+async function fetchJson(url, cfg) {
+  const response = await fetch(url, { headers: headers(cfg) });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = data?.error || data?.message || `${response.status} ${response.statusText}`;
+    throw new Error(`WK API kon niet worden geladen: ${message}`);
+  }
+  return data;
+}
+
+async function fetchWorldCupData(cfg) {
+  const [gamesPayload, teamsPayload, stadiumsPayload] = await Promise.all([
+    fetchJson(`${cfg.apiBase}/get/games`, cfg),
+    fetchJson(`${cfg.apiBase}/get/teams`, cfg).catch(() => []),
+    fetchJson(`${cfg.apiBase}/get/stadiums`, cfg).catch(() => [])
+  ]);
+
+  const teams = new Map();
+  for (const team of asArray(teamsPayload)) {
+    const id = String(team.id ?? team._id ?? team.team_id ?? '').trim();
+    if (!id) continue;
+    teams.set(id, {
+      name: team.name_en || team.name || team.team || team.country || `Team ${id}`,
+      logo: team.flag || team.logo || team.image || ''
+    });
+  }
+
+  const stadiums = new Map();
+  for (const stadium of asArray(stadiumsPayload)) {
+    const id = String(stadium.id ?? stadium._id ?? stadium.stadium_id ?? '').trim();
+    if (!id) continue;
+    stadiums.set(id, {
+      name: stadium.name_en || stadium.fifa_name || stadium.name || '',
+      city: stadium.city_en || stadium.city || stadium.country_en || ''
+    });
+  }
+
+  return { games: asArray(gamesPayload), teams, stadiums };
+}
+
+function pickTeamName(id, label, teams) {
+  const cleanId = String(id ?? '').trim();
+  if (cleanId && cleanId !== '0' && teams.has(cleanId)) return teams.get(cleanId).name;
+  return label || 'Nog onbekend';
+}
+
+function pickTeamLogo(id, teams) {
+  const cleanId = String(id ?? '').trim();
+  if (cleanId && teams.has(cleanId)) return teams.get(cleanId).logo || '';
+  return '';
+}
+
+function isFinished(game) {
+  const raw = String(game.finished ?? game.is_finished ?? game.status ?? game.match_status ?? '').toLowerCase();
+  return finishedValues.has(raw) || game.finished === true || game.is_finished === true;
+}
+
+function isLive(game) {
+  const raw = String(game.live_status ?? game.status ?? game.match_status ?? game.state ?? '').toLowerCase();
+  return liveValues.has(raw) || game.live === true || game.is_live === true;
+}
+
+function stageLabel(game) {
+  const type = String(game.type || '').toLowerCase();
+  const group = game.group || '';
+  const map = {
+    group: group ? `Groep ${group}` : 'Groepsfase',
+    r32: 'Ronde van 32',
+    r16: 'Achtste finale',
+    qf: 'Kwartfinale',
+    sf: 'Halve finale',
+    third: 'Troostfinale',
+    final: 'Finale'
+  };
+  return map[type] || (group ? `Groep ${group}` : 'WK wedstrijd');
+}
+
+function normalizeGame(game, teams, stadiums, timezone) {
+  const date = parseWorldCupDate(game.local_date || game.date || game.kickoff || game.kickoff_at || game.match_date || game.utc_date);
+  const dateIso = date ? date.toISOString() : new Date(0).toISOString();
+  const stadium = stadiums.get(String(game.stadium_id ?? game.venue_id ?? '').trim()) || {};
+  const played = isFinished(game);
+  const live = !played && isLive(game);
+  const homeGoals = game.home_score ?? game.home_goals ?? game.score_home ?? game.homeScore ?? null;
+  const awayGoals = game.away_score ?? game.away_goals ?? game.score_away ?? game.awayScore ?? null;
+  const elapsed = game.elapsed ?? game.minute ?? game.time_elapsed ?? null;
 
   return {
-    id: item.fixture?.id,
-    date: item.fixture?.date,
-    dateKey: localDateKey(item.fixture?.date, timezone),
-    timestamp: item.fixture?.timestamp || Math.floor(new Date(item.fixture?.date).getTime() / 1000),
-    venue: item.fixture?.venue?.name || '',
-    city: item.fixture?.venue?.city || '',
-    round: item.league?.round || '',
-    statusShort,
-    statusLong,
+    id: String(game.id ?? game._id ?? game.match_id ?? Math.random().toString(36).slice(2)),
+    date: dateIso,
+    dateKey: localDateKey(dateIso, timezone),
+    timestamp: Math.floor(new Date(dateIso).getTime() / 1000),
+    venue: stadium.name || game.stadium || game.venue || '',
+    city: stadium.city || game.city || '',
+    round: stageLabel(game),
+    statusShort: played ? 'FT' : live ? 'LIVE' : 'TBD',
+    statusLong: played ? 'Afgelopen' : live ? 'Live' : 'Nog te spelen',
     elapsed,
-    state,
-    homeTeam: item.teams?.home?.name || 'Nog onbekend',
-    awayTeam: item.teams?.away?.name || 'Nog onbekend',
-    homeLogo: item.teams?.home?.logo || '',
-    awayLogo: item.teams?.away?.logo || '',
-    homeGoals,
-    awayGoals
+    state: played ? 'played' : live ? 'live' : 'upcoming',
+    homeTeam: pickTeamName(game.home_team_id ?? game.homeTeamId, game.home_team_label || game.home_team || game.homeTeam, teams),
+    awayTeam: pickTeamName(game.away_team_id ?? game.awayTeamId, game.away_team_label || game.away_team || game.awayTeam, teams),
+    homeLogo: pickTeamLogo(game.home_team_id ?? game.homeTeamId, teams),
+    awayLogo: pickTeamLogo(game.away_team_id ?? game.awayTeamId, teams),
+    homeGoals: homeGoals === undefined || homeGoals === null || homeGoals === '' ? null : Number(homeGoals),
+    awayGoals: awayGoals === undefined || awayGoals === null || awayGoals === '' ? null : Number(awayGoals)
   };
 }
 
@@ -66,11 +175,17 @@ async function ensureCacheTable(client) {
   `);
 }
 
-async function getCachedMatches(client, cacheKey, cacheMinutes) {
+async function getFreshCache(client, cacheKey, cacheMinutes) {
   const result = await client.query(
     `SELECT payload, fetched_at FROM match_cache WHERE id = $1 AND fetched_at > NOW() - ($2 || ' minutes')::interval`,
     [cacheKey, String(cacheMinutes)]
   );
+  if (!result.rows.length) return null;
+  return result.rows[0].payload;
+}
+
+async function getAnyCache(client, cacheKey) {
+  const result = await client.query(`SELECT payload FROM match_cache WHERE id = $1`, [cacheKey]);
   if (!result.rows.length) return null;
   return result.rows[0].payload;
 }
@@ -83,58 +198,48 @@ async function saveCache(client, cacheKey, payload) {
   );
 }
 
-async function fetchFixtures(config) {
-  if (!config.key) {
-    throw new Error('API_FOOTBALL_KEY ontbreekt. Voeg deze toe aan de Environment variables in Netlify.');
-  }
-  const url = new URL('https://v3.football.api-sports.io/fixtures');
-  url.searchParams.set('league', config.league);
-  url.searchParams.set('season', config.season);
-  url.searchParams.set('timezone', config.timezone);
+async function buildPayload(cfg) {
+  const { games, teams, stadiums } = await fetchWorldCupData(cfg);
+  const matches = games
+    .map((game) => normalizeGame(game, teams, stadiums, cfg.timezone))
+    .filter((match) => match.timestamp > 0)
+    .sort((a, b) => a.timestamp - b.timestamp);
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      'x-apisports-key': config.key
-    }
-  });
-
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(data?.message || 'API-Football kon niet worden geladen.');
-  }
-  if (Array.isArray(data?.errors) && data.errors.length) {
-    throw new Error(data.errors.join(', '));
-  }
-  if (data?.errors && typeof data.errors === 'object' && Object.keys(data.errors).length) {
-    throw new Error(Object.values(data.errors).join(', '));
-  }
-  return data.response || [];
+  const todayKey = localDateKey(new Date().toISOString(), cfg.timezone);
+  const fetchedAt = new Date().toISOString();
+  return {
+    provider: 'worldcup26.ir',
+    sourceLabel: 'Open-source WK 2026 API',
+    matches,
+    todayKey,
+    timezone: cfg.timezone,
+    fetchedAt,
+    lastUpdatedAt: fetchedAt
+  };
 }
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') return json(405, { error: 'Methode niet toegestaan.' });
+
   try {
-    const config = apiConfig();
-    const cacheKey = `api-football-fixtures-${config.league}-${config.season}-${config.timezone}`;
+    const cfg = config();
+    const cacheKey = `worldcup26-games-${cfg.timezone}`;
     const payload = await withDb(async (client) => {
       await ensureCacheTable(client);
-      const cached = await getCachedMatches(client, cacheKey, config.cacheMinutes);
+      const cached = await getFreshCache(client, cacheKey, cfg.cacheMinutes);
       if (cached) return { ...cached, cached: true };
 
-      const fixtures = await fetchFixtures(config);
-      const matches = fixtures.map((fixture) => normalizeFixture(fixture, config.timezone)).sort((a, b) => a.timestamp - b.timestamp);
-      const todayKey = localDateKey(new Date().toISOString(), config.timezone);
-      const result = {
-        matches,
-        todayKey,
-        league: Number(config.league),
-        season: Number(config.season),
-        timezone: config.timezone,
-        fetchedAt: new Date().toISOString()
-      };
-      await saveCache(client, cacheKey, result);
-      return { ...result, cached: false };
+      try {
+        const fresh = await buildPayload(cfg);
+        await saveCache(client, cacheKey, fresh);
+        return { ...fresh, cached: false };
+      } catch (apiError) {
+        const stale = await getAnyCache(client, cacheKey);
+        if (stale) return { ...stale, cached: true, stale: true, warning: apiError.message };
+        throw apiError;
+      }
     });
+
     return json(200, payload);
   } catch (error) {
     return json(500, { error: error.message });
