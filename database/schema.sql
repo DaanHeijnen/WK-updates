@@ -31,3 +31,10 @@ CREATE TABLE IF NOT EXISTS update_photos (
 
 CREATE INDEX IF NOT EXISTS idx_updates_created_at ON updates(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_update_photos_update_id ON update_photos(update_id);
+
+
+CREATE TABLE IF NOT EXISTS match_cache (
+    id VARCHAR(80) PRIMARY KEY,
+    payload JSONB NOT NULL,
+    fetched_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

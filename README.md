@@ -116,3 +116,22 @@ De admin-link staat bewust nergens op de publieke website. De admin gebruikt zel
 ```txt
 /admin-login.html
 ```
+
+
+## Wedstrijden en uitslagen
+
+De pagina `/wedstrijden.html` gebruikt nu de gratis open-source WK 2026 API van `worldcup26.ir`.
+De backend haalt de data op via Netlify Function `matches.js` en gebruikt de bestaande `match_cache` tabel om data tijdelijk op te slaan.
+
+Je hoeft geen API-key meer toe te voegen voor API-Football.
+
+Optionele environment variables:
+
+```txt
+WORLD_CUP26_API_BASE=https://worldcup26.ir
+WORLD_CUP26_TOKEN=alleen nodig als de provider later toch een token vereist
+MATCH_TIMEZONE=Europe/Amsterdam
+MATCH_CACHE_MINUTES=30
+```
+
+De wedstrijdenpagina toont ook wanneer de scores voor het laatst zijn bijgewerkt.
