@@ -1,5 +1,6 @@
 const API = '/.netlify/functions';
 const tokenKey = 'oranje_admin_token';
+const likedUpdatesKey = 'oranje_liked_updates';
 
 function $(selector) { return document.querySelector(selector); }
 function $all(selector) { return [...document.querySelectorAll(selector)]; }
@@ -7,6 +8,27 @@ function $all(selector) { return [...document.querySelectorAll(selector)]; }
 function token() { return localStorage.getItem(tokenKey); }
 function setToken(value) { localStorage.setItem(tokenKey, value); }
 function clearToken() { localStorage.removeItem(tokenKey); }
+
+function getLikedUpdates() {
+  try {
+    const value = JSON.parse(localStorage.getItem(likedUpdatesKey) || '[]');
+    return Array.isArray(value) ? value.map(String) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function isUpdateLiked(id) {
+  return getLikedUpdates().includes(String(id));
+}
+
+function setUpdateLiked(id, liked) {
+  const key = String(id);
+  const values = new Set(getLikedUpdates());
+  if (liked) values.add(key);
+  else values.delete(key);
+  localStorage.setItem(likedUpdatesKey, JSON.stringify([...values]));
+}
 
 async function request(path, options = {}) {
   const headers = { ...(options.headers || {}) };
@@ -51,8 +73,8 @@ function renderUpdate(update, isLatest = false) {
         <h3>${escapeHtml(update.title)}</h3>
         <div class="update-content">${update.contentHtml}</div>
         <div class="update-footer">
-          <button class="like-button" type="button" data-like-id="${update.id}">
-            <span class="heart">♡</span>
+          <button class="like-button ${isUpdateLiked(update.id) ? 'liked' : ''}" type="button" data-like-id="${update.id}" aria-pressed="${isUpdateLiked(update.id) ? 'true' : 'false'}">
+            <span class="heart">${isUpdateLiked(update.id) ? '♥' : '♡'}</span>
             <span data-like-count="${update.id}">${compactLikes(update.likesCount)}</span>
           </button>
         </div>
@@ -88,12 +110,21 @@ function bindLikes() {
   $all('[data-like-id]').forEach((button) => {
     button.addEventListener('click', async () => {
       const id = button.dataset.likeId;
+      const currentlyLiked = isUpdateLiked(id);
+      const nextLiked = !currentlyLiked;
       button.disabled = true;
       try {
-        const data = await request('/update-like', { method: 'POST', body: JSON.stringify({ id }) });
-        const count = document.querySelector(`[data-like-count="${id}"]`);
-        if (count) count.textContent = compactLikes(data.likesCount);
-        button.querySelector('.heart').textContent = '♥';
+        const data = await request('/update-like', { method: 'POST', body: JSON.stringify({ id, liked: nextLiked }) });
+        setUpdateLiked(id, nextLiked);
+        document.querySelectorAll(`[data-like-count="${id}"]`).forEach((count) => {
+          count.textContent = compactLikes(data.likesCount);
+        });
+        document.querySelectorAll(`[data-like-id="${id}"]`).forEach((likeButton) => {
+          likeButton.classList.toggle('liked', nextLiked);
+          likeButton.setAttribute('aria-pressed', nextLiked ? 'true' : 'false');
+          const heart = likeButton.querySelector('.heart');
+          if (heart) heart.textContent = nextLiked ? '♥' : '♡';
+        });
       } catch (err) {
         alert(err.message);
       } finally {
@@ -222,6 +253,7 @@ async function collectPhotos(form) {
 
 async function initCreate() {
   await requireLogin();
+  initLogout();
   const form = $('#update-form');
   const error = $('#form-error');
   form.addEventListener('submit', async (event) => {
@@ -245,6 +277,7 @@ async function initCreate() {
 
 async function initEdit() {
   await requireLogin();
+  initLogout();
   const form = $('#update-form');
   const error = $('#form-error');
   const params = new URLSearchParams(window.location.search);
@@ -312,7 +345,8 @@ async function initSetup() {
 }
 
 const page = document.body.dataset.page;
-if (page === 'feed') { initFeed(); initShare(); }
+initShare();
+if (page === 'feed') initFeed();
 if (page === 'login') initLogin();
 if (page === 'admin-overview') initAdminOverview();
 if (page === 'admin-create') initCreate();
@@ -393,7 +427,6 @@ function renderMatch(match, options = {}) {
 }
 
 async function initMatches() {
-  initShare();
   const loading = $('#matches-loading');
   const error = $('#matches-error');
   const todaySection = $('#today-section');

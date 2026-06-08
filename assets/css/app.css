@@ -17,13 +17,16 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; min-height: 100%; }
 body {
+  min-height: 100vh;
   margin: 0;
   background: var(--grey);
   color: var(--black);
   font-family: Arial, Helvetica, sans-serif;
   line-height: 1.45;
+  display: flex;
+  flex-direction: column;
 }
 
 body::before {
@@ -70,6 +73,7 @@ button, input, textarea { font: inherit; }
 .ball { font-size: .72em; }
 
 .page {
+  flex: 1 0 auto;
   width: min(100%, 760px);
   margin: 0 auto;
   padding: 28px 24px 64px;
@@ -284,6 +288,8 @@ button, input, textarea { font: inherit; }
 }
 
 .like-button .heart { font-size: 1.5rem; line-height: 1; }
+.like-button.liked .heart { color: var(--orange); }
+.like-button.liked { color: var(--orange); }
 
 .empty-state, .error-message, .notice {
   padding: 14px 16px;
@@ -295,32 +301,53 @@ button, input, textarea { font: inherit; }
 .notice { color: #155724; border-left-color: #259b4a; }
 
 .site-footer {
-  margin-top: 20px;
+  flex-shrink: 0;
+  margin-top: auto;
   padding: 54px 24px 70px;
   background: var(--footer);
   color: #fff;
 }
 
-.site-footer h2 {
+.footer-inner {
   width: min(100%, 760px);
-  margin: 0 auto 42px;
+  margin: 0 auto;
+}
+
+.site-footer h2 {
+  margin: 0 0 42px;
   font-size: clamp(2.2rem, 12vw, 5rem);
   line-height: .9;
   text-transform: uppercase;
   font-weight: 400;
 }
 
-.site-footer a {
-  display: block;
-  width: max-content;
-  margin: 0 auto;
+.footer-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 2px solid rgba(255,255,255,.8);
+  border-radius: 4px;
   color: #fff;
   text-decoration: none;
-  font-weight: 800;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
 }
 
 .auth-page {
-  min-height: 100vh;
+  flex: 1 0 auto;
+  min-height: auto;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -411,19 +438,25 @@ button, input, textarea { font: inherit; }
   justify-content: flex-end;
 }
 
-.site-nav a {
+.site-nav a,
+.nav-button {
+  appearance: none;
   color: var(--orange-dark);
+  background: transparent;
   text-decoration: none;
   font-weight: 900;
   text-transform: uppercase;
   font-size: .78rem;
+  line-height: 1.2;
   padding: 8px 10px;
   border: 2px solid transparent;
   border-radius: 4px;
+  cursor: pointer;
 }
 
 .site-nav a[aria-current="page"],
-.site-nav a:hover {
+.site-nav a:hover,
+.nav-button:hover {
   border-color: var(--orange-dark);
   background: #fff6f0;
 }
