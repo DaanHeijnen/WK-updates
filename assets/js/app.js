@@ -95,8 +95,6 @@ function renderUpdate(update, isLatest = false) {
 
 async function initFeed() {
   const list = $('#updates-list');
-  const latest = $('#latest-update');
-  const latestSection = $('#latest-section');
   const empty = $('#empty-feed');
   const error = $('#feed-error');
   try {
@@ -106,9 +104,8 @@ async function initFeed() {
       empty.hidden = false;
       return;
     }
-    latestSection.hidden = false;
-    latest.innerHTML = renderUpdate(updates[0], true);
-    list.innerHTML = updates.slice(1).map((update) => renderUpdate(update, false)).join('');
+    const sortedUpdates = updates.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    list.innerHTML = sortedUpdates.map((update, index) => renderUpdate(update, index === 0)).join('');
     bindLikes();
   } catch (err) {
     error.textContent = err.message;
@@ -159,7 +156,7 @@ function initShare() {
       } else {
         await navigator.clipboard.writeText(window.location.origin);
         button.textContent = 'Link gekopieerd';
-        setTimeout(() => { button.textContent = 'Deel website'; }, 1800);
+        setTimeout(() => { button.textContent = 'Share'; }, 1800);
       }
     } catch (_) {}
   });
