@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8f2d00">
   <title>Update bewerken - Oranje Updates</title>
   <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -21,14 +22,14 @@
   </header>
   <main class="page admin-page">
     <section class="panel">
-      <p class="eyebrow">Admin</p>
+      <p class="eyebrow">Admin console</p>
       <h1>Update bewerken</h1>
       <form id="update-form" class="form">
         <input type="hidden" name="id">
-        <label>Titel<input type="text" name="title" required maxlength="255"></label>
-        <label>Inhoud<textarea name="contentMarkdown" rows="12" required></textarea></label>
+        <label>Headline<input type="text" name="title" required maxlength="255" placeholder="E.g. Netherlands clinch dramatic win"></label>
+        <label>Story<textarea name="contentMarkdown" rows="12" required placeholder="Start writing the full story here... Markdown is supported."></textarea></label>
         <div id="existing-photos" class="existing-photos"></div>
-        <label>Extra foto’s toevoegen<input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple></label>
+        <label>Extra featured image<input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple></label>
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">Update opslaan</button>
           <a class="btn btn-secondary" href="/admin-overview.html">Annuleren</a>
@@ -48,6 +49,6 @@
     </div>
   </footer>
 
-  <script src="assets/js/app.js"></script>
+  <script src="assets/js/app.js" defer></script>
 </body>
 </html>
