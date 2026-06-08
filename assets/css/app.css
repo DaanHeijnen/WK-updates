@@ -232,18 +232,57 @@ img { max-width: 100%; height: auto; }
 .footer-link { appearance: none; border: 0; background: transparent; padding: 0; color: #fff; text-decoration: underline; text-underline-offset: 4px; font-size: .88rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; cursor: pointer; }
 .footer-link:hover { color: #f0c5b4; }
 .updates-list { display: grid; gap: 22px; }
-@media (max-width: 680px) {
-  body { padding-bottom: 74px; }
-  .site-header { min-height: 60px; padding: 14px 18px; }
-  .brand { font-size: 1.55rem; }
-  .site-header .site-nav { position: fixed; z-index: 35; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.96); border-top: 1px solid var(--line); box-shadow: 0 -10px 26px rgba(82,36,16,.12); backdrop-filter: blur(16px); }
-  .site-nav a, .nav-button { border-radius: 12px; min-height: 54px; padding: 8px 6px; font-size: .68rem; display: grid; place-items: center; align-content: center; gap: 2px; }
-  .site-nav a::before, .nav-button::before { display: block; font-size: 1.08rem; line-height: 1; }
-  .site-nav a[href="/"]::before { content: "▦"; }
-  .site-nav a[href*="wedstrijden"]::before { content: "⚽"; }
-  .site-nav a[href*="admin" ]::before, .nav-button::before { content: "◴"; }
+@media (max-width: 920px) {
+  body { padding-bottom: 0; }
+  .site-header {
+    position: sticky;
+    top: 0;
+    min-height: 0;
+    padding: 10px 14px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+  .brand {
+    display: inline-flex !important;
+    align-self: center;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 2;
+    font-size: clamp(1.45rem, 9vw, 2.25rem);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand span:last-child { display: inline !important; }
+  .site-header .site-nav {
+    position: static;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  .site-nav a, .nav-button {
+    border-radius: 999px;
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: .72rem;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    background: #f6e5df;
+  }
+  .site-nav a::before, .nav-button::before { content: none !important; }
   .site-nav a[aria-current="page"], .nav-button:hover { background: var(--accent); color: #fff; }
-  .page { padding-top: 56px; padding-inline: 14px; }
+  .page { padding-top: 40px; padding-inline: 14px; }
   .hero h1 { font-size: clamp(3.5rem, 17vw, 5.2rem); }
   .hero p:not(.eyebrow) { font-size: 1.45rem; }
   .match-main { padding: 34px 20px 22px; gap: 8px; }
