@@ -82,6 +82,7 @@ function renderUpdate(update, isLatest = false) {
         </div>
         <h3>${escapeHtml(update.title)}</h3>
         <div class="update-content">${update.contentHtml}</div>
+        ${renderPhotos(update.photos)}
         <div class="update-footer">
           <button class="like-button ${isUpdateLiked(update.id) ? 'liked' : ''}" type="button" data-like-id="${update.id}" aria-pressed="${isUpdateLiked(update.id) ? 'true' : 'false'}">
             <span class="heart">${isUpdateLiked(update.id) ? '♥' : '♡'}</span>
@@ -89,7 +90,6 @@ function renderUpdate(update, isLatest = false) {
           </button>
         </div>
       </div>
-      ${renderPhotos(update.photos)}
     </article>`;
 }
 
