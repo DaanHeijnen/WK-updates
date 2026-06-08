@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS match_cache (
+    id VARCHAR(80) PRIMARY KEY,
+    payload JSONB NOT NULL,
+    fetched_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

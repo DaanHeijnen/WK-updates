@@ -318,3 +318,97 @@ if (page === 'admin-overview') initAdminOverview();
 if (page === 'admin-create') initCreate();
 if (page === 'admin-edit') initEdit();
 if (page === 'setup') initSetup();
+
+function formatMatchDay(value) {
+  return new Intl.DateTimeFormat('nl-NL', { weekday: 'long', day: '2-digit', month: 'long' }).format(new Date(value));
+}
+
+function formatMatchTime(value) {
+  return new Intl.DateTimeFormat('nl-NL', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+}
+
+function matchStatusLabel(match) {
+  if (match.state === 'played') return 'Afgelopen';
+  if (match.state === 'live') return match.elapsed ? `Live · ${match.elapsed}’` : 'Live';
+  if (match.statusShort === 'TBD') return 'Tijd nog onbekend';
+  return formatMatchTime(match.date);
+}
+
+function renderTeam(name, logo, align = '') {
+  return `<div class="match-team ${align}">
+    ${logo ? `<img src="${logo}" alt="" loading="lazy">` : '<span class="team-placeholder">•</span>'}
+    <span>${escapeHtml(name)}</span>
+  </div>`;
+}
+
+function renderMatch(match, options = {}) {
+  const score = match.state === 'upcoming'
+    ? '<span class="score-vs">vs</span>'
+    : `<span>${match.homeGoals ?? '-'}</span><span class="score-divider">-</span><span>${match.awayGoals ?? '-'}</span>`;
+  const place = [match.venue, match.city].filter(Boolean).join(', ');
+  const target = options.scrollTarget ? ' data-scroll-target="true"' : '';
+  return `<article class="match-card ${match.state} ${options.today ? 'today-match' : ''}" id="match-${match.id}"${target}>
+    <div class="match-topline">
+      <span class="tag">${match.state === 'played' ? 'Uitslag' : match.state === 'live' ? 'Nu bezig' : 'Komt eraan'}</span>
+      <span>${formatMatchDay(match.date)} · ${matchStatusLabel(match)}</span>
+    </div>
+    <div class="match-main">
+      ${renderTeam(match.homeTeam, match.homeLogo, 'home')}
+      <div class="match-score">${score}</div>
+      ${renderTeam(match.awayTeam, match.awayLogo, 'away')}
+    </div>
+    <p class="match-details">${escapeHtml(match.round || 'WK wedstrijd')}${place ? ` · ${escapeHtml(place)}` : ''}</p>
+  </article>`;
+}
+
+async function initMatches() {
+  initShare();
+  const loading = $('#matches-loading');
+  const error = $('#matches-error');
+  const todaySection = $('#today-section');
+  const playedSection = $('#played-section');
+  const upcomingSection = $('#upcoming-section');
+  const todayBox = $('#today-matches');
+  const playedBox = $('#played-matches');
+  const upcomingBox = $('#upcoming-matches');
+
+  try {
+    const data = await request('/matches');
+    const matches = data.matches || [];
+    const todayKey = data.todayKey;
+    const today = matches.filter((match) => match.dateKey === todayKey);
+    const played = matches.filter((match) => match.state === 'played' && match.dateKey !== todayKey).reverse();
+    const upcoming = matches.filter((match) => match.state !== 'played' && match.dateKey !== todayKey);
+
+    loading.hidden = true;
+
+    if (today.length) {
+      todaySection.hidden = false;
+      const firstNotPlayed = today.find((match) => match.state !== 'played') || today[0];
+      todayBox.innerHTML = today.map((match) => renderMatch(match, { today: true, scrollTarget: match.id === firstNotPlayed.id })).join('');
+    }
+    if (played.length) {
+      playedSection.hidden = false;
+      playedBox.innerHTML = played.map((match) => renderMatch(match)).join('');
+    }
+    if (upcoming.length) {
+      upcomingSection.hidden = false;
+      upcomingBox.innerHTML = upcoming.map((match) => renderMatch(match)).join('');
+    }
+    if (!matches.length) {
+      loading.textContent = 'Er zijn nog geen wedstrijden gevonden.';
+      loading.hidden = false;
+    }
+
+    setTimeout(() => {
+      const target = document.querySelector('[data-scroll-target="true"]') || todaySection;
+      if (target && !todaySection.hidden) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 450);
+  } catch (err) {
+    loading.hidden = true;
+    error.textContent = err.message;
+    error.hidden = false;
+  }
+}
+
+if (page === 'matches') initMatches();

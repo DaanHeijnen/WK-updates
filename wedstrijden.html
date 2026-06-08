@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wedstrijden | Oranje Updates</title>
+  <meta name="description" content="Bekijk de WK-uitslagen en komende wedstrijden.">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body data-page="matches">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Oranje Updates startpagina">
+      <span class="ball">⚽</span>
+      <span>Oranje Updates</span>
+    </a>
+    <nav class="site-nav" aria-label="Hoofdnavigatie">
+      <a href="/">Updates</a>
+      <a href="/wedstrijden.html" aria-current="page">Wedstrijden</a>
+    </nav>
+  </header>
+
+  <main class="page page-matches">
+    <section class="hero match-hero">
+      <p class="eyebrow">WK schema</p>
+      <h1>Uitslagen en komende wedstrijden.</h1>
+      <p>Bekijk de gespeelde WK-wedstrijden bovenaan en de wedstrijden die nog komen daaronder. De pagina springt automatisch naar de wedstrijden van vandaag.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="share-site" type="button">Deel website</button>
+        <a class="btn btn-secondary" href="mailto:moisemaatje2@gmail.com">Contact me</a>
+      </div>
+    </section>
+
+    <p id="matches-loading" class="empty-state">Wedstrijden worden geladen...</p>
+    <p id="matches-error" class="error-message" hidden></p>
+
+    <section id="today-section" class="matches-section" hidden>
+      <div class="section-title"><span></span><h2>Vandaag</h2></div>
+      <div id="today-matches" class="matches-list"></div>
+    </section>
+
+    <section id="played-section" class="matches-section" hidden>
+      <div class="section-title"><span></span><h2>Gespeelde wedstrijden</h2></div>
+      <div id="played-matches" class="matches-list"></div>
+    </section>
+
+    <section id="upcoming-section" class="matches-section" hidden>
+      <div class="section-title"><span></span><h2>Komende wedstrijden</h2></div>
+      <div id="upcoming-matches" class="matches-list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <h2>WK nieuws<br>door Moise<br>Maatje</h2>
+    <a href="mailto:moisemaatje2@gmail.com">Contact</a>
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
