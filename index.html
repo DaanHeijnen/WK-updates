@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Oranje Updates</title>
+  <meta name="description" content="WK nieuws door Moise Maatje. Lees de nieuwste Oranje updates.">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body data-page="feed">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Oranje Updates startpagina">
+      <span class="ball">⚽</span>
+      <span>Oranje Updates</span>
+    </a>
+  </header>
+
+  <main class="page page-feed">
+    <section class="hero">
+      <p class="eyebrow">WK nieuws</p>
+      <h1>Alle WK updates op één plek.</h1>
+      <p>Volg de laatste updates en standen rondom het WK poule georganiseerd door Moise Maatje.</p>
+  
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="share-site" type="button">Deel website</button>
+        <a class="btn btn-secondary" href="mailto:moisemaatje2@gmail.com">Contact me</a>
+      </div>
+    </section>
+
+    <section id="latest-section" class="latest-section" hidden>
+      <div class="section-title"><span></span><h2>Nieuwste update</h2></div>
+      <div id="latest-update"></div>
+    </section>
+
+    <section class="updates-section">
+      <div class="section-title"><span></span><h2>Eerdere updates</h2></div>
+      <div id="updates-list" class="updates-list"></div>
+      <p id="empty-feed" class="empty-state" hidden>Er zijn nog geen updates geplaatst.</p>
+      <p id="feed-error" class="error-message" hidden></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <h2>WK nieuws<br>door Moise<br>Maatje</h2>
+    <a href="mailto:moisemaatje2@gmail.com">Contact</a>
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

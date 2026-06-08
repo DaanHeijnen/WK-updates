@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nieuwe update - Oranje Updates</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body data-page="admin-create">
+  <header class="admin-header">
+    <a class="brand" href="/admin-overview.html"><span class="ball">⚽</span><span>Oranje beheer</span></a>
+  </header>
+  <main class="page admin-page">
+    <section class="panel">
+      <p class="eyebrow">Admin</p>
+      <h1>Nieuwe update</h1>
+      <form id="update-form" class="form">
+        <label>Titel<input type="text" name="title" required maxlength="255"></label>
+        <label>Inhoud<textarea name="contentMarkdown" rows="12" required placeholder="Gebruik Markdown: **dikgedrukt**, koppen, lijsten en links."></textarea></label>
+        <label>Foto’s toevoegen<input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple></label>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Publiceer update</button>
+          <a class="btn btn-secondary" href="/admin-overview.html">Annuleren</a>
+        </div>
+        <p id="form-error" class="error-message" hidden></p>
+      </form>
+    </section>
+  </main>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

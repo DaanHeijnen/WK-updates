@@ -1,0 +1,21 @@
+{
+  "name": "wk-update-feed-netlify",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Netlify-native WK update feed with admin, database, likes and photo uploads.",
+  "scripts": {
+    "dev": "netlify dev",
+    "zip": "cd .. && zip -r wk-update-feed-netlify-final.zip wk-update-feed-netlify-final"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.2.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "marked": "^12.0.2",
+    "pg": "^8.12.0",
+    "sanitize-html": "^2.13.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.38.1"
+  }
+}

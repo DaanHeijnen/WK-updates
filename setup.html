@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setup - Oranje Updates</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body data-page="setup">
+  <main class="auth-page">
+    <section class="panel auth-panel">
+      <p class="eyebrow">Eenmalige setup</p>
+      <h1>Database en admin aanmaken</h1>
+      <form id="setup-form" class="form">
+        <label>Setup-code<input type="password" name="setupSecret" required></label>
+        <label>Admin e-mailadres<input type="email" name="email" required></label>
+        <label>Admin wachtwoord<input type="password" name="password" minlength="8" required></label>
+        <button class="btn btn-primary" type="submit">Setup uitvoeren</button>
+        <p id="setup-message" class="notice" hidden></p>
+        <p id="setup-error" class="error-message" hidden></p>
+      </form>
+    </section>
+  </main>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

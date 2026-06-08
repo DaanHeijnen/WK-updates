@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Updates beheren - Oranje Updates</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body data-page="admin-overview">
+  <header class="admin-header">
+    <a class="brand" href="/admin-overview.html"><span class="ball">⚽</span><span>Oranje beheer</span></a>
+    <button class="btn btn-ghost" id="logout-button" type="button">Uitloggen</button>
+  </header>
+  <main class="page admin-page">
+    <div class="admin-topline">
+      <div><p class="eyebrow">Admin</p><h1>Updates beheren</h1></div>
+      <a class="btn btn-primary" href="/admin-create.html">Nieuwe update</a>
+    </div>
+    <div id="admin-list" class="admin-list"></div>
+    <p id="admin-error" class="error-message" hidden></p>
+  </main>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
