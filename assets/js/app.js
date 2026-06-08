@@ -356,7 +356,13 @@ function formatMatchTime(value) {
 function matchStatusLabel(match) {
   if (match.state === 'played') return 'Afgelopen';
   if (match.state === 'live') return match.elapsed ? `Live · ${match.elapsed}’` : 'Live';
-  if (match.statusShort === 'TBD') return 'Tijd nog onbekend';
+
+  const date = new Date(match.date);
+  if (Number.isNaN(date.getTime())) return 'Tijd nog onbekend';
+
+  const hasRealTime = date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0;
+  if (!hasRealTime) return 'Tijd nog onbekend';
+
   return formatMatchTime(match.date);
 }
 
