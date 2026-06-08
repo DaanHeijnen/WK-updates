@@ -4,6 +4,71 @@ const DEFAULT_API_BASE = 'https://worldcup26.ir';
 const finishedValues = new Set(['true', '1', 'yes', 'finished', 'ft', 'fulltime', 'full_time', 'completed', 'afgelopen']);
 const liveValues = new Set(['live', 'in_play', 'playing', '1h', '2h', 'ht', 'et', 'pen', 'nu bezig']);
 
+
+const fallbackTeamRows = [
+  ['1', 'Mexico', '🇲🇽', 'A'],
+  ['2', 'Zuid-Afrika', '🇿🇦', 'A'],
+  ['3', 'Zuid-Korea', '🇰🇷', 'A'],
+  ['4', 'Tsjechië', '🇨🇿', 'A'],
+  ['5', 'Canada', '🇨🇦', 'B'],
+  ['6', 'Zwitserland', '🇨🇭', 'B'],
+  ['7', 'Qatar', '🇶🇦', 'B'],
+  ['8', 'Bosnië en Herzegovina', '🇧🇦', 'B'],
+  ['9', 'Brazilië', '🇧🇷', 'C'],
+  ['10', 'Marokko', '🇲🇦', 'C'],
+  ['11', 'Haïti', '🇭🇹', 'C'],
+  ['12', 'Schotland', '🏴', 'C'],
+  ['13', 'Verenigde Staten', '🇺🇸', 'D'],
+  ['14', 'Paraguay', '🇵🇾', 'D'],
+  ['15', 'Australië', '🇦🇺', 'D'],
+  ['16', 'Turkije', '🇹🇷', 'D'],
+  ['17', 'Duitsland', '🇩🇪', 'E'],
+  ['18', 'Curaçao', '🇨🇼', 'E'],
+  ['19', 'Ivoorkust', '🇨🇮', 'E'],
+  ['20', 'Ecuador', '🇪🇨', 'E'],
+  ['21', 'Nederland', '🇳🇱', 'F'],
+  ['22', 'Japan', '🇯🇵', 'F'],
+  ['23', 'Zweden', '🇸🇪', 'F'],
+  ['24', 'Tunesië', '🇹🇳', 'F'],
+  ['25', 'België', '🇧🇪', 'G'],
+  ['26', 'Egypte', '🇪🇬', 'G'],
+  ['27', 'Iran', '🇮🇷', 'G'],
+  ['28', 'Nieuw-Zeeland', '🇳🇿', 'G'],
+  ['29', 'Spanje', '🇪🇸', 'H'],
+  ['30', 'Kaapverdië', '🇨🇻', 'H'],
+  ['31', 'Saudi-Arabië', '🇸🇦', 'H'],
+  ['32', 'Uruguay', '🇺🇾', 'H'],
+  ['33', 'Frankrijk', '🇫🇷', 'I'],
+  ['34', 'Senegal', '🇸🇳', 'I'],
+  ['35', 'Noorwegen', '🇳🇴', 'I'],
+  ['36', 'Irak', '🇮🇶', 'I'],
+  ['37', 'Argentinië', '🇦🇷', 'J'],
+  ['38', 'Algerije', '🇩🇿', 'J'],
+  ['39', 'Oostenrijk', '🇦🇹', 'J'],
+  ['40', 'Jordanië', '🇯🇴', 'J'],
+  ['41', 'Portugal', '🇵🇹', 'K'],
+  ['42', 'Congo DR', '🇨🇩', 'K'],
+  ['43', 'Oezbekistan', '🇺🇿', 'K'],
+  ['44', 'Colombia', '🇨🇴', 'K'],
+  ['45', 'Engeland', '🏴', 'L'],
+  ['46', 'Kroatië', '🇭🇷', 'L'],
+  ['47', 'Ghana', '🇬🇭', 'L'],
+  ['48', 'Panama', '🇵🇦', 'L']
+];
+
+const fallbackTeams = new Map(fallbackTeamRows.map(([id, name, logo, group]) => [id, { name, logo, group } ]));
+const fallbackGroups = fallbackTeamRows.reduce((groups, [id, name, logo, group]) => {
+  if (!groups[group]) groups[group] = [];
+  groups[group].push({ id, name, logo, group });
+  return groups;
+}, {});
+
+const fallbackPairings = {
+  '1': [[0, 1], [2, 3]],
+  '2': [[0, 2], [3, 1]],
+  '3': [[3, 0], [1, 2]]
+};
+
 function config() {
   return {
     apiBase: (process.env.WORLD_CUP26_API_BASE || DEFAULT_API_BASE).replace(/\/$/, ''),
@@ -53,7 +118,17 @@ function asArray(payload) {
   if (Array.isArray(payload?.response)) return payload.response;
   if (Array.isArray(payload?.games)) return payload.games;
   if (Array.isArray(payload?.matches)) return payload.matches;
+  if (Array.isArray(payload?.teams)) return payload.teams;
+  if (Array.isArray(payload?.stadiums)) return payload.stadiums;
+  if (Array.isArray(payload?.stadia)) return payload.stadia;
   if (Array.isArray(payload?.result)) return payload.result;
+  if (payload?.data && typeof payload.data === 'object') {
+    if (Array.isArray(payload.data.games)) return payload.data.games;
+    if (Array.isArray(payload.data.matches)) return payload.data.matches;
+    if (Array.isArray(payload.data.teams)) return payload.data.teams;
+    if (Array.isArray(payload.data.stadiums)) return payload.data.stadiums;
+    if (Array.isArray(payload.data.stadia)) return payload.data.stadia;
+  }
   return [];
 }
 
@@ -74,7 +149,7 @@ async function fetchWorldCupData(cfg) {
     fetchJson(`${cfg.apiBase}/get/stadiums`, cfg).catch(() => [])
   ]);
 
-  const teams = new Map();
+  const teams = new Map(fallbackTeams);
   for (const team of asArray(teamsPayload)) {
     const id = String(team.id ?? team._id ?? team.team_id ?? '').trim();
     if (!id) continue;
@@ -97,16 +172,117 @@ async function fetchWorldCupData(cfg) {
   return { games: asArray(gamesPayload), teams, stadiums };
 }
 
+
+function firstValue(...values) {
+  for (const value of values) {
+    if (value !== undefined && value !== null && String(value).trim() !== '') return value;
+  }
+  return '';
+}
+
+function teamIdFrom(value) {
+  if (value && typeof value === 'object') {
+    return String(firstValue(value.id, value._id, value.team_id, value.teamId)).trim();
+  }
+  return String(value ?? '').trim();
+}
+
+function teamLabelFrom(value) {
+  if (value && typeof value === 'object') {
+    return firstValue(value.name_en, value.name, value.team, value.country, value.label);
+  }
+  return value;
+}
+
+function translatePlaceholder(label) {
+  const text = String(label || '').trim();
+  if (!text) return '';
+  return text
+    .replace(/Runner-up Group/gi, 'Nummer 2 groep')
+    .replace(/Winner Group/gi, 'Winnaar groep')
+    .replace(/Winner Match/gi, 'Winnaar wedstrijd')
+    .replace(/Loser Match/gi, 'Verliezer wedstrijd')
+    .replace(/3rd Group/gi, 'Nummer 3 groep');
+}
+
 function pickTeamName(id, label, teams) {
-  const cleanId = String(id ?? '').trim();
+  const cleanId = teamIdFrom(id);
   if (cleanId && cleanId !== '0' && teams.has(cleanId)) return teams.get(cleanId).name;
-  return label || 'Nog onbekend';
+  const objectLabel = teamLabelFrom(id);
+  const cleanLabel = translatePlaceholder(label || objectLabel);
+  return cleanLabel || 'Nog onbekend';
 }
 
 function pickTeamLogo(id, teams) {
-  const cleanId = String(id ?? '').trim();
+  const cleanId = teamIdFrom(id);
   if (cleanId && teams.has(cleanId)) return teams.get(cleanId).logo || '';
   return '';
+}
+
+function teamFromGroupFallback(game, side) {
+  const type = String(game.type || '').toLowerCase();
+  const group = String(game.group || '').toUpperCase();
+  if (type && type !== 'group') return null;
+  if (!/^[A-L]$/.test(group)) return null;
+
+  const groupTeams = fallbackGroups[group];
+  if (!groupTeams || groupTeams.length < 4) return null;
+
+  const matchday = String(game.matchday || game.match_day || game.round || '1');
+  const pairIndex = Number.isFinite(game._pairIndex) ? game._pairIndex : 0;
+  const pair = (fallbackPairings[matchday] || fallbackPairings['1'])[pairIndex] || (fallbackPairings[matchday] || fallbackPairings['1'])[0];
+  const index = side === 'home' ? pair[0] : pair[1];
+  return groupTeams[index] || null;
+}
+
+function resolveTeam(game, side, teams) {
+  const isHome = side === 'home';
+  const id = isHome
+    ? firstValue(game.home_team_id, game.homeTeamId, game.home_id, game.homeId, game.homeTeam?.id, game.home_team?.id, game.home?.id, game.team1_id, game.team1?.id)
+    : firstValue(game.away_team_id, game.awayTeamId, game.away_id, game.awayId, game.awayTeam?.id, game.away_team?.id, game.away?.id, game.team2_id, game.team2?.id);
+  const label = isHome
+    ? firstValue(game.home_team_label, game.home_team_name, game.homeTeamName, game.home_team, game.homeTeam, game.home, game.team1_name, game.team1)
+    : firstValue(game.away_team_label, game.away_team_name, game.awayTeamName, game.away_team, game.awayTeam, game.away, game.team2_name, game.team2);
+
+  const cleanId = teamIdFrom(id);
+  if (cleanId && cleanId !== '0' && teams.has(cleanId)) {
+    const team = teams.get(cleanId);
+    return { name: team.name, logo: team.logo || '' };
+  }
+
+  const cleanLabel = translatePlaceholder(label || teamLabelFrom(id));
+  if (cleanLabel) return { name: cleanLabel, logo: '' };
+
+  const fallback = teamFromGroupFallback(game, side);
+  if (fallback) return { name: fallback.name, logo: fallback.logo || '' };
+
+  return { name: 'Nog onbekend', logo: '' };
+}
+
+function annotateGroupMatchPairings(games) {
+  const buckets = new Map();
+  for (const game of games) {
+    const group = String(game.group || '').toUpperCase();
+    const type = String(game.type || '').toLowerCase();
+    if ((type && type !== 'group') || !/^[A-L]$/.test(group)) continue;
+    const matchday = String(game.matchday || game.match_day || game.round || '1');
+    const key = `${group}-${matchday}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(game);
+  }
+
+  for (const bucket of buckets.values()) {
+    bucket.sort((a, b) => {
+      const dateA = parseWorldCupDate(a.local_date || a.date || a.kickoff || a.kickoff_at || a.match_date || a.utc_date);
+      const dateB = parseWorldCupDate(b.local_date || b.date || b.kickoff || b.kickoff_at || b.match_date || b.utc_date);
+      const timeA = dateA ? dateA.getTime() : Number(a.id || 0);
+      const timeB = dateB ? dateB.getTime() : Number(b.id || 0);
+      return timeA - timeB;
+    });
+    bucket.forEach((game, index) => { game._pairIndex = index % 2; });
+  }
+
+  return games;
 }
 
 function isFinished(game) {
@@ -144,6 +320,9 @@ function normalizeGame(game, teams, stadiums, timezone) {
   const awayGoals = game.away_score ?? game.away_goals ?? game.score_away ?? game.awayScore ?? null;
   const elapsed = game.elapsed ?? game.minute ?? game.time_elapsed ?? null;
 
+  const home = resolveTeam(game, 'home', teams);
+  const away = resolveTeam(game, 'away', teams);
+
   return {
     id: String(game.id ?? game._id ?? game.match_id ?? Math.random().toString(36).slice(2)),
     date: dateIso,
@@ -156,10 +335,10 @@ function normalizeGame(game, teams, stadiums, timezone) {
     statusLong: played ? 'Afgelopen' : live ? 'Live' : 'Nog te spelen',
     elapsed,
     state: played ? 'played' : live ? 'live' : 'upcoming',
-    homeTeam: pickTeamName(game.home_team_id ?? game.homeTeamId, game.home_team_label || game.home_team || game.homeTeam, teams),
-    awayTeam: pickTeamName(game.away_team_id ?? game.awayTeamId, game.away_team_label || game.away_team || game.awayTeam, teams),
-    homeLogo: pickTeamLogo(game.home_team_id ?? game.homeTeamId, teams),
-    awayLogo: pickTeamLogo(game.away_team_id ?? game.awayTeamId, teams),
+    homeTeam: home.name,
+    awayTeam: away.name,
+    homeLogo: home.logo,
+    awayLogo: away.logo,
     homeGoals: homeGoals === undefined || homeGoals === null || homeGoals === '' ? null : Number(homeGoals),
     awayGoals: awayGoals === undefined || awayGoals === null || awayGoals === '' ? null : Number(awayGoals)
   };
@@ -200,7 +379,8 @@ async function saveCache(client, cacheKey, payload) {
 
 async function buildPayload(cfg) {
   const { games, teams, stadiums } = await fetchWorldCupData(cfg);
-  const matches = games
+  const annotatedGames = annotateGroupMatchPairings(games);
+  const matches = annotatedGames
     .map((game) => normalizeGame(game, teams, stadiums, cfg.timezone))
     .filter((match) => match.timestamp > 0)
     .sort((a, b) => a.timestamp - b.timestamp);
@@ -223,7 +403,7 @@ exports.handler = async (event) => {
 
   try {
     const cfg = config();
-    const cacheKey = `worldcup26-games-${cfg.timezone}`;
+    const cacheKey = `worldcup26-games-v4-${cfg.timezone}`;
     const payload = await withDb(async (client) => {
       await ensureCacheTable(client);
       const cached = await getFreshCache(client, cacheKey, cfg.cacheMinutes);

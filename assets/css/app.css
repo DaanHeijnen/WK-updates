@@ -489,17 +489,27 @@ button, input, textarea { font: inherit; }
 }
 
 .match-team img,
-.team-placeholder {
+.team-placeholder,
+.team-flag {
   width: 30px;
   height: 30px;
   flex: 0 0 30px;
   object-fit: contain;
 }
 
-.team-placeholder {
+.team-placeholder,
+.team-flag {
   display: inline-grid;
   place-items: center;
+}
+
+.team-placeholder {
   color: var(--orange-dark);
+}
+
+.team-flag {
+  font-size: 25px;
+  line-height: 1;
 }
 
 .match-team span:last-child {

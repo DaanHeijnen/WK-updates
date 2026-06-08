@@ -361,8 +361,13 @@ function matchStatusLabel(match) {
 }
 
 function renderTeam(name, logo, align = '') {
+  const flag = logo && /^https?:\/\//i.test(logo)
+    ? `<img src="${escapeHtml(logo)}" alt="" loading="lazy">`
+    : logo
+      ? `<span class="team-flag" aria-hidden="true">${escapeHtml(logo)}</span>`
+      : '<span class="team-placeholder">•</span>';
   return `<div class="match-team ${align}">
-    ${logo ? `<img src="${logo}" alt="" loading="lazy">` : '<span class="team-placeholder">•</span>'}
+    ${flag}
     <span>${escapeHtml(name)}</span>
   </div>`;
 }
