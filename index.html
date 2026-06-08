@@ -4,51 +4,53 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Oranje Updates</title>
-  <meta name="description" content="WK nieuws door Moise Maatje. Lees de nieuwste Oranje updates.">
+  <meta name="description" content="Lees de nieuwste Oranje updates tijdens het WK.">
   <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body data-page="feed">
-  <header class="site-header">
-    <a class="brand" href="/" aria-label="Oranje Updates startpagina">
-      <span class="ball">⚽</span>
-      <span>Oranje Updates</span>
-    </a>
-    <nav class="site-nav" aria-label="Hoofdnavigatie">
-      <a href="/" aria-current="page">Updates</a>
-      <a href="/wedstrijden.html">Wedstrijden</a>
-    </nav>
+  <header class="topbar">
+    <a class="menu-dot" href="/matches.html" aria-label="Wedstrijden">☰</a>
+    <a class="wordmark" href="/">Oranje Updates</a>
+    <button class="icon-button" id="share-site" type="button" aria-label="Website delen">↗</button>
   </header>
 
-  <main class="page page-feed">
-    <section class="hero">
-      <p class="eyebrow">WK nieuws</p>
-      <h1>Alle Oranje updates op één plek.</h1>
-      <p>Volg het laatste nieuws, wedstrijdupdates en korte berichten rondom het WK.</p>
+  <main class="app-shell updates-shell">
+    <section class="hero-card">
+      <div class="hero-image" aria-hidden="true"></div>
+      <div class="hero-content">
+        <span class="pill pill-live">Live update</span>
+        <h1>Alle Oranje updates op één plek</h1>
+        <p>Volg het laatste nieuws, korte updates en foto's rondom Oranje tijdens het WK.</p>
+      </div>
     </section>
 
-    <section id="latest-section" class="latest-section" hidden>
-      <div class="section-title"><span></span><h2>Nieuwste update</h2></div>
+    <section id="latest-section" class="content-section" hidden>
+      <div class="section-heading">
+        <h2>Laatste update</h2>
+      </div>
       <div id="latest-update"></div>
     </section>
 
-    <section class="updates-section">
-      <div class="section-title"><span></span><h2>Eerdere updates</h2></div>
+    <section class="content-section">
+      <div class="section-heading">
+        <h2>Eerdere updates</h2>
+      </div>
       <div id="updates-list" class="updates-list"></div>
       <p id="empty-feed" class="empty-state" hidden>Er zijn nog geen updates geplaatst.</p>
       <p id="feed-error" class="error-message" hidden></p>
     </section>
+
+    <section class="contact-card">
+      <h2>Vragen of contact?</h2>
+      <p>Neem contact op met Moise Maatje.</p>
+      <a class="btn btn-dark" href="mailto:moisemaatje2@gmail.com">Contact opnemen</a>
+    </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <h2>WK nieuws<br>door Moise<br>Maatje</h2>
-      <div class="footer-actions">
-        <button class="footer-link" id="share-site" type="button">Deel website</button>
-        <a class="footer-link" href="mailto:moisemaatje2@gmail.com">Contact</a>
-        <a class="footer-link" href="/admin-login.html">Admin login</a>
-      </div>
-    </div>
-  </footer>
+  <nav class="bottom-nav" aria-label="Hoofdnavigatie">
+    <a class="active" href="/">⌂<span>Updates</span></a>
+    <a href="/matches.html">⚽<span>Matches</span></a>
+  </nav>
 
   <script src="assets/js/app.js"></script>
 </body>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Oranje Updates</title>
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body data-page="admin">
+  <main class="admin-app">
+    <section id="admin-login-view" class="login-screen">
+      <div class="login-logo">⚽</div>
+      <h1>Oranje Updates</h1>
+      <span class="admin-badge">Admin</span>
+      <form id="login-form" class="login-card">
+        <label>E-mail of gebruikersnaam<input type="email" name="email" autocomplete="email" placeholder="admin@oranjeupdates.nl" required></label>
+        <label>Wachtwoord<input type="password" name="password" autocomplete="current-password" placeholder="••••••••" required></label>
+        <button class="btn btn-primary" type="submit">Inloggen</button>
+        <p id="login-error" class="error-message" hidden></p>
+      </form>
+      <a class="back-link" href="/">← Terug naar website</a>
+    </section>
+
+    <section id="admin-dashboard-view" class="admin-dashboard" hidden>
+      <header class="topbar admin-topbar">
+        <button class="menu-dot" id="logout-button" type="button" aria-label="Uitloggen">⎋</button>
+        <a class="wordmark" href="/admin.html">Oranje Updates</a>
+        <a class="avatar-link" href="/" aria-label="Website bekijken">⚽</a>
+      </header>
+
+      <div class="app-shell admin-content">
+        <div class="admin-title-row">
+          <div>
+            <span class="overline">Dashboard</span>
+            <h1>Admin overzicht</h1>
+          </div>
+          <button class="floating-add inline-add" type="button" data-open-create>+</button>
+        </div>
+
+        <div class="stat-grid">
+          <article class="stat-card"><span>Updates</span><strong id="stat-updates">0</strong></article>
+          <article class="stat-card"><span>Likes</span><strong id="stat-likes">0</strong></article>
+        </div>
+
+        <section class="admin-panel" id="admin-form-panel" hidden>
+          <div class="panel-heading">
+            <h2 id="admin-form-title">Nieuwe update</h2>
+            <button class="text-button" type="button" data-close-form>Sluiten</button>
+          </div>
+          <form id="update-form" class="form">
+            <input type="hidden" name="id">
+            <label>Titel<input type="text" name="title" required maxlength="255"></label>
+            <label>Inhoud<textarea name="contentMarkdown" rows="10" required placeholder="Gebruik Markdown: **dikgedrukt**, koppen, lijsten en links."></textarea></label>
+            <div id="existing-photos" class="existing-photos"></div>
+            <label>Foto’s toevoegen<input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple></label>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Opslaan</button>
+              <button class="btn btn-light" type="button" data-close-form>Annuleren</button>
+            </div>
+            <p id="form-error" class="error-message" hidden></p>
+          </form>
+        </section>
+
+        <section class="admin-panel">
+          <div class="section-heading admin-section-heading">
+            <h2>Recente updates</h2>
+            <button class="text-button" type="button" data-open-create>Nieuwe update</button>
+          </div>
+          <div id="admin-list" class="admin-list"></div>
+          <p id="admin-error" class="error-message" hidden></p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,22 +1,16 @@
 # Oranje Updates - Netlify productieversie
 
-Dit is een Netlify-native webapp voor WK-updates, uitslagen en wedstrijden.
+Dit is een Netlify-native webapp voor WK-updates.
 
 ## Wat zit erin
 
-- Publieke Nederlandse homepage
+- Publieke Nederlandse homepage zonder zichtbare admin-link
 - Nieuwste update uitgelicht bovenaan
 - Alle updates volledig leesbaar op de homepage
-- Like-knop per update met toggle: liken of like verwijderen
-- Wedstrijdenpagina met gespeelde wedstrijden, wedstrijden van vandaag en komende wedstrijden
-- Wedstrijdtijden worden getoond in Amsterdamse tijd
-- Landnamen en vlaggen op de wedstrijdenpagina
-- Teller wanneer de scores voor het laatst zijn bijgewerkt
-- Deelknop in de footer
-- Contactlink in de footer via `mailto:moisemaatje2@gmail.com`
-- Link naar de admin-login in de footer: `/admin-login.html`
-- Admin-login
-- Admin dashboard
+- Like-knop per update
+- Deelknop voor de website
+- Contactknop via `mailto:moisemaatje2@gmail.com`
+- Admin-login via aparte URL: `/admin.html`
 - Updates aanmaken, bewerken en verwijderen
 - Foto's uploaden bij updates
 - Foto's opslaan via Netlify Blobs
@@ -27,8 +21,7 @@ Dit is een Netlify-native webapp voor WK-updates, uitslagen en wedstrijden.
 
 ```txt
 index.html
-wedstrijden.html
-admin-login.html
+admin.html
 admin-overview.html
 admin-create.html
 admin-edit.html
@@ -48,13 +41,11 @@ netlify/
     update-edit.js
     update-delete.js
     update-like.js
-    matches.js
     photo.js
     photo-delete.js
     _shared.js
 database/
   schema.sql
-  002_add_match_cache.sql
 netlify.toml
 package.json
 .env.example
@@ -62,14 +53,13 @@ package.json
 
 ## Deploy op Netlify
 
-1. Upload deze map naar GitHub of vervang je bestaande repo met deze bestanden.
-2. Koppel de GitHub repo aan Netlify.
-3. Netlify gebruikt `index.html` direct vanuit de hoofdmap.
-4. Voeg Netlify Database toe aan de site.
-5. Zet de environment variables.
-6. Deploy de site.
-7. Open `/setup.html` om de tabellen en eerste admin aan te maken.
-8. Log in via `/admin-login.html`.
+1. Upload deze map of koppel hem aan een Git repository.
+2. Netlify gebruikt `index.html` direct vanuit de hoofdmap.
+3. Voeg Netlify Database toe aan de site.
+4. Zet de environment variables.
+5. Deploy de site.
+6. Open `/setup.html` om de tabellen en eerste admin aan te maken.
+7. Log in via `/admin.html`.
 
 ## Environment variables
 
@@ -80,18 +70,12 @@ JWT_SECRET=een-lange-random-geheime-string
 ADMIN_SETUP_SECRET=een-tijdelijke-setup-code
 ```
 
-De app probeert automatisch Netlify Database te gebruiken. Als dat niet werkt, zet dan handmatig je read/write Postgres connection string als:
+De database connection string moet beschikbaar zijn als een van deze variabelen:
 
 ```txt
-DATABASE_URL=postgresql://...
-```
-
-Optioneel:
-
-```txt
-WORLD_CUP26_API_BASE=https://worldcup26.ir
-MATCH_TIMEZONE=Europe/Amsterdam
-MATCH_CACHE_MINUTES=30
+NETLIFY_DATABASE_URL
+NETLIFY_DB_URL
+DATABASE_URL
 ```
 
 ## Eenmalige setup
@@ -107,26 +91,10 @@ Vul daar de setup-code, het admin e-mailadres en het admin wachtwoord in.
 Na de setup kun je inloggen via:
 
 ```txt
-/admin-login.html
+/admin.html
 ```
 
 Voor extra veiligheid kun je na de setup `setup.html` en `netlify/functions/setup-db.js` verwijderen of de `ADMIN_SETUP_SECRET` wijzigen.
-
-## Wedstrijden
-
-De wedstrijdenpagina staat op:
-
-```txt
-/wedstrijden.html
-```
-
-De data komt uit de open-source WK 2026 API via de Netlify Function:
-
-```txt
-/.netlify/functions/matches
-```
-
-De API-key van API-Football is niet meer nodig.
 
 ## Foto's
 
@@ -140,3 +108,11 @@ Limieten:
 
 - Maximaal 5 MB per foto
 - Maximaal 5 foto's per uploadactie
+
+## Belangrijk
+
+De admin-link staat bewust nergens op de publieke website. De admin gebruikt zelf de directe URL:
+
+```txt
+/admin.html
+```
