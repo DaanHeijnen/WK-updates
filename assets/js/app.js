@@ -34,10 +34,20 @@ async function request(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
   if (token()) headers.Authorization = `Bearer ${token()}`;
-  const response = await fetch(`${API}${path}`, { ...options, headers });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || 'Er ging iets mis.');
-  return data;
+
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), options.timeout || 15000);
+  try {
+    const response = await fetch(`${API}${path}`, { ...options, headers, signal: controller.signal });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Er ging iets mis.');
+    return data;
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error('De server reageert te langzaam. Probeer het opnieuw.');
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 function formatDate(value) {
@@ -58,7 +68,7 @@ function escapeHtml(value) {
 function renderPhotos(photos = []) {
   if (!photos.length) return '';
   return `<div class="photo-grid ${photos.length > 1 ? 'multi' : ''}">${photos.map((photo) => `
-    <img src="${photo.url}" alt="${escapeHtml(photo.altText || 'WK foto')}" loading="lazy">
+    <img src="${photo.url}" alt="${escapeHtml(photo.altText || 'WK foto')}" loading="lazy" decoding="async">
   `).join('')}</div>`;
 }
 
@@ -238,6 +248,37 @@ function fileToDataUrl(file) {
   });
 }
 
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Foto kon niet worden geladen.'));
+    image.src = src;
+  });
+}
+
+async function optimiseImage(file) {
+  const dataUrl = await fileToDataUrl(file);
+  const image = await loadImage(dataUrl);
+  const maxWidth = 1600;
+  const maxHeight = 1000;
+  const ratio = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+  const width = Math.max(1, Math.round(image.width * ratio));
+  const height = Math.max(1, Math.round(image.height * ratio));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(image, 0, 0, width, height);
+
+  const outputType = file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+  const optimised = canvas.toDataURL(outputType, .84);
+  return optimised.length < dataUrl.length ? optimised : dataUrl;
+}
+
 async function collectPhotos(form) {
   const input = form.querySelector('input[type="file"]');
   const files = [...(input.files || [])];
@@ -246,7 +287,7 @@ async function collectPhotos(form) {
   for (const file of files) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Alleen JPG, PNG en WebP zijn toegestaan.');
     if (file.size > 5 * 1024 * 1024) throw new Error('Een foto mag maximaal 5 MB zijn.');
-    photos.push({ name: file.name, dataUrl: await fileToDataUrl(file), altText: file.name.replace(/\.[^.]+$/, '') });
+    photos.push({ name: file.name, dataUrl: await optimiseImage(file), altText: file.name.replace(/\.[^.]+$/, '') });
   }
   return photos;
 }
@@ -419,8 +460,8 @@ function renderMatch(match, options = {}) {
   const target = options.scrollTarget ? ' data-scroll-target="true"' : '';
   return `<article class="match-card ${match.state} ${options.today ? 'today-match' : ''}" id="match-${match.id}"${target}>
     <div class="match-topline">
-      <span class="tag">${match.state === 'played' ? 'Uitslag' : match.state === 'live' ? 'Nu bezig' : 'Komt eraan'}</span>
-      <span>${formatMatchDay(match.date)} · ${matchStatusLabel(match)}</span>
+      <span class="tag">${match.state === 'played' ? 'Final score' : match.state === 'live' ? 'Live now' : 'Upcoming'}</span>
+      <span>${matchStatusLabel(match)}${match.state === 'upcoming' ? ` · ${formatMatchDay(match.date)}` : ''}</span>
     </div>
     <div class="match-main">
       ${renderTeam(match.homeTeam, match.homeLogo, 'home')}
