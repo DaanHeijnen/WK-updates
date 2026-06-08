@@ -13,9 +13,8 @@
     "jsonwebtoken": "^9.0.2",
     "marked": "^12.0.2",
     "pg": "^8.12.0",
-    "sanitize-html": "^2.13.0"
+    "sanitize-html": "^2.13.0",
+    "@netlify/database": "latest"
   },
-  "devDependencies": {
-    "netlify-cli": "^17.38.1"
-  }
+  "devDependencies": {}
 }

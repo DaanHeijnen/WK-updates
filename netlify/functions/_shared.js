@@ -16,14 +16,26 @@ function json(statusCode, data, headers = {}) {
   };
 }
 
-function getDatabaseUrl() {
-  return process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL || process.env.DATABASE_URL;
+async function getDatabaseUrl() {
+  const manualUrl = process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL || process.env.DATABASE_URL;
+  if (manualUrl) return manualUrl;
+
+  try {
+    const database = await import('@netlify/database');
+    if (database && typeof database.getConnectionString === 'function') {
+      return database.getConnectionString();
+    }
+  } catch (error) {
+    // Fallback error is thrown below with a clearer Dutch message.
+  }
+
+  return null;
 }
 
 async function withDb(callback) {
-  const connectionString = getDatabaseUrl();
+  const connectionString = await getDatabaseUrl();
   if (!connectionString) {
-    throw new Error('Geen databaseverbinding gevonden. Stel NETLIFY_DATABASE_URL, NETLIFY_DB_URL of DATABASE_URL in.');
+    throw new Error('Geen databaseverbinding gevonden. Koppel Netlify Database aan deze site of stel DATABASE_URL handmatig in.');
   }
   const client = new Client({ connectionString, ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false } });
   await client.connect();
