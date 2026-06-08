@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { marked } = require('marked');
 const sanitizeHtml = require('sanitize-html');
-const { getStore } = require('@netlify/blobs');
 
 function json(statusCode, data, headers = {}) {
   return {
@@ -103,8 +102,8 @@ function parseBody(event) {
   }
 }
 
-function photoStore() {
-  return getStore('wk-update-photos');
+async function ensurePhotoDataColumn(client) {
+  await client.query('ALTER TABLE update_photos ADD COLUMN IF NOT EXISTS file_data BYTEA');
 }
 
 const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -134,18 +133,19 @@ async function savePhotos(client, updateId, photos = []) {
   if (!Array.isArray(photos) || photos.length === 0) return;
   if (photos.length > maxImagesPerRequest) throw new Error('Je kunt maximaal 5 foto’s per keer uploaden.');
 
-  const store = photoStore();
+  await ensurePhotoDataColumn(client);
+
   for (let index = 0; index < photos.length; index += 1) {
     const photo = photos[index];
     const { mimeType, buffer } = decodeDataUrl(photo.dataUrl);
     const originalName = safeFileName(photo.name);
     const extension = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
     const blobKey = `updates/${updateId}/${Date.now()}-${Math.random().toString(16).slice(2)}.${extension}`;
-    await store.set(blobKey, buffer, { metadata: { contentType: mimeType, originalName } });
+
     await client.query(
-      `INSERT INTO update_photos (update_id, file_name, blob_key, mime_type, file_size, alt_text, sort_order)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [updateId, originalName, blobKey, mimeType, buffer.length, photo.altText || null, index]
+      `INSERT INTO update_photos (update_id, file_name, blob_key, mime_type, file_size, alt_text, sort_order, file_data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [updateId, originalName, blobKey, mimeType, buffer.length, photo.altText || null, index, buffer]
     );
   }
 }
@@ -172,11 +172,6 @@ async function getPhotosByUpdateIds(client, updateIds) {
 
 async function deletePhotos(client, photoIds) {
   if (!Array.isArray(photoIds) || photoIds.length === 0) return;
-  const result = await client.query(`SELECT id, blob_key FROM update_photos WHERE id = ANY($1::int[])`, [photoIds.map(Number)]);
-  const store = photoStore();
-  for (const photo of result.rows) {
-    await store.delete(photo.blob_key);
-  }
   await client.query(`DELETE FROM update_photos WHERE id = ANY($1::int[])`, [photoIds.map(Number)]);
 }
 
@@ -189,7 +184,7 @@ module.exports = {
   hashPassword,
   verifyPassword,
   parseBody,
-  photoStore,
+  ensurePhotoDataColumn,
   savePhotos,
   getPhotosByUpdateIds,
   deletePhotos

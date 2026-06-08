@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS update_photos (
     file_size INT NOT NULL,
     alt_text VARCHAR(255) NULL,
     sort_order INT NOT NULL DEFAULT 0,
+    file_data BYTEA NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
