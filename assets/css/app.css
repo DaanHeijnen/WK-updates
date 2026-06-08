@@ -292,7 +292,7 @@ img { max-width: 100%; height: auto; }
   .form textarea { min-height: 420px; }
   .form-actions .btn { width: 100%; }
   .admin-topline { align-items: stretch; flex-direction: column; }
-  .site-footer { display: none; }
+
 }
 @media (max-width: 390px) {
   .match-team { font-size: 1.34rem; }
