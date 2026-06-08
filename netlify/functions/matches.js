@@ -5,6 +5,112 @@ const finishedValues = new Set(['true', '1', 'yes', 'finished', 'ft', 'fulltime'
 const liveValues = new Set(['live', 'in_play', 'playing', '1h', '2h', 'ht', 'et', 'pen', 'nu bezig']);
 
 
+const stadiumTimezoneRules = [
+  [/atlanta|mercedes/i, 'America/New_York'],
+  [/boston|foxborough|gillette|new england/i, 'America/New_York'],
+  [/dallas|arlington|at&t/i, 'America/Chicago'],
+  [/guadalajara|akron/i, 'America/Mexico_City'],
+  [/houston|nrg/i, 'America/Chicago'],
+  [/kansas/i, 'America/Chicago'],
+  [/los angeles|inglewood|sofi/i, 'America/Los_Angeles'],
+  [/mexico city|ciudad de mexico|azteca/i, 'America/Mexico_City'],
+  [/miami|hard rock/i, 'America/New_York'],
+  [/monterrey|bbva/i, 'America/Monterrey'],
+  [/new york|new jersey|east rutherford|metlife/i, 'America/New_York'],
+  [/philadelphia|lincoln/i, 'America/New_York'],
+  [/san francisco|bay area|santa clara|levi/i, 'America/Los_Angeles'],
+  [/seattle|lumen/i, 'America/Los_Angeles'],
+  [/toronto|bmo/i, 'America/Toronto'],
+  [/vancouver|bc place/i, 'America/Vancouver']
+];
+
+function timezoneForVenue(stadium = {}, game = {}) {
+  const explicit = firstValue(
+    game.timezone,
+    game.time_zone,
+    game.tz,
+    stadium.timezone,
+    stadium.time_zone,
+    stadium.tz
+  );
+  if (explicit && String(explicit).includes('/')) return String(explicit).trim();
+
+  const text = [
+    stadium.name,
+    stadium.city,
+    game.stadium,
+    game.venue,
+    game.city,
+    game.location
+  ].filter(Boolean).join(' ');
+
+  for (const [pattern, timezone] of stadiumTimezoneRules) {
+    if (pattern.test(text)) return timezone;
+  }
+  return 'UTC';
+}
+
+function getZonedParts(date, timeZone) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(date);
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    second: Number(map.second || 0)
+  };
+}
+
+function zonedTimeToUtc(year, month, day, hour, minute, second, timeZone) {
+  let utcMs = Date.UTC(year, month - 1, day, hour, minute, second || 0);
+  for (let i = 0; i < 3; i += 1) {
+    const parts = getZonedParts(new Date(utcMs), timeZone);
+    const asUtcMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second || 0);
+    utcMs -= asUtcMs - Date.UTC(year, month - 1, day, hour, minute, second || 0);
+  }
+  return new Date(utcMs);
+}
+
+function parseDateInfo(value, sourceTimezone = 'UTC') {
+  if (!value) return { date: null, hasTime: false };
+  if (value instanceof Date) return { date: Number.isNaN(value.getTime()) ? null : value, hasTime: true };
+  const text = String(value).trim();
+
+  const usMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/.exec(text);
+  if (usMatch) {
+    const [, month, day, year, hour = '0', minute = '0', second = '0'] = usMatch;
+    const hasTime = usMatch[4] !== undefined;
+    return {
+      date: zonedTimeToUtc(Number(year), Number(month), Number(day), Number(hour), Number(minute), Number(second), sourceTimezone),
+      hasTime
+    };
+  }
+
+  const euMatch = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?(?!.*(?:Z|[+-]\d{2}:?\d{2}))/.exec(text);
+  if (euMatch) {
+    const [, year, month, day, hour = '0', minute = '0', second = '0'] = euMatch;
+    const hasTime = euMatch[4] !== undefined;
+    return {
+      date: zonedTimeToUtc(Number(year), Number(month), Number(day), Number(hour), Number(minute), Number(second), sourceTimezone),
+      hasTime
+    };
+  }
+
+  const parsed = new Date(text);
+  return { date: Number.isNaN(parsed.getTime()) ? null : parsed, hasTime: /\d{1,2}:\d{2}/.test(text) };
+}
+
 const fallbackTeamRows = [
   ['1', 'Mexico', '🇲🇽', 'A'],
   ['2', 'Zuid-Afrika', '🇿🇦', 'A'],
@@ -97,19 +203,8 @@ function localDateKey(dateValue, timezone) {
   return `${map.year}-${map.month}-${map.day}`;
 }
 
-function parseWorldCupDate(value) {
-  if (!value) return null;
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  const text = String(value).trim();
-
-  const usMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/.exec(text);
-  if (usMatch) {
-    const [, month, day, year, hour, minute] = usMatch;
-    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), 0));
-  }
-
-  const isoLike = new Date(text);
-  return Number.isNaN(isoLike.getTime()) ? null : isoLike;
+function parseWorldCupDate(value, sourceTimezone = 'UTC') {
+  return parseDateInfo(value, sourceTimezone).date;
 }
 
 function asArray(payload) {
@@ -311,9 +406,11 @@ function stageLabel(game) {
 }
 
 function normalizeGame(game, teams, stadiums, timezone) {
-  const date = parseWorldCupDate(game.local_date || game.date || game.kickoff || game.kickoff_at || game.match_date || game.utc_date);
-  const dateIso = date ? date.toISOString() : new Date(0).toISOString();
   const stadium = stadiums.get(String(game.stadium_id ?? game.venue_id ?? '').trim()) || {};
+  const sourceTimezone = timezoneForVenue(stadium, game);
+  const dateInfo = parseDateInfo(game.local_date || game.date || game.kickoff || game.kickoff_at || game.match_date || game.utc_date, sourceTimezone);
+  const date = dateInfo.date;
+  const dateIso = date ? date.toISOString() : new Date(0).toISOString();
   const played = isFinished(game);
   const live = !played && isLive(game);
   const homeGoals = game.home_score ?? game.home_goals ?? game.score_home ?? game.homeScore ?? null;
@@ -330,8 +427,9 @@ function normalizeGame(game, teams, stadiums, timezone) {
     timestamp: Math.floor(new Date(dateIso).getTime() / 1000),
     venue: stadium.name || game.stadium || game.venue || '',
     city: stadium.city || game.city || '',
+    kickoffSourceTimezone: sourceTimezone,
     round: stageLabel(game),
-    statusShort: played ? 'FT' : live ? 'LIVE' : 'TBD',
+    statusShort: played ? 'FT' : live ? 'LIVE' : dateInfo.hasTime ? 'NS' : 'TBD',
     statusLong: played ? 'Afgelopen' : live ? 'Live' : 'Nog te spelen',
     elapsed,
     state: played ? 'played' : live ? 'live' : 'upcoming',
@@ -403,7 +501,7 @@ exports.handler = async (event) => {
 
   try {
     const cfg = config();
-    const cacheKey = `worldcup26-games-v4-${cfg.timezone}`;
+    const cacheKey = `worldcup26-games-v6-${cfg.timezone}`;
     const payload = await withDb(async (client) => {
       await ensureCacheTable(client);
       const cached = await getFreshCache(client, cacheKey, cfg.cacheMinutes);
