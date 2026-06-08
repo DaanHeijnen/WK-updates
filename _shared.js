@@ -103,9 +103,28 @@ function parseBody(event) {
   }
 }
 
+const photoStoreName = 'wk-update-photos';
+
+function getBlobConfig() {
+  const siteID = process.env.NETLIFY_BLOBS_SITE_ID || process.env.BLOBS_SITE_ID || process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+  const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.BLOBS_TOKEN || process.env.NETLIFY_AUTH_TOKEN;
+
+  if (siteID && token) {
+    return { name: photoStoreName, siteID, token };
+  }
+
+  return null;
+}
+
 function photoStore(event) {
-  if (event) connectLambda(event);
-  return getStore('wk-update-photos');
+  const manualConfig = getBlobConfig();
+  if (manualConfig) return getStore(manualConfig);
+
+  if (event && typeof connectLambda === 'function') {
+    connectLambda(event);
+  }
+
+  return getStore(photoStoreName);
 }
 
 const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
