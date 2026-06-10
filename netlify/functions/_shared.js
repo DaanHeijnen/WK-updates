@@ -102,6 +102,17 @@ function parseBody(event) {
   }
 }
 
+
+async function ensureRankingsTable(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS rankings (
+      id INT PRIMARY KEY DEFAULT 1,
+      names JSONB NOT NULL DEFAULT '[]'::jsonb,
+      updated_at TIMESTAMP NULL
+    );
+  `);
+}
+
 async function ensurePhotoDataColumn(client) {
   await client.query('ALTER TABLE update_photos ADD COLUMN IF NOT EXISTS file_data BYTEA');
 }
@@ -184,6 +195,7 @@ module.exports = {
   hashPassword,
   verifyPassword,
   parseBody,
+  ensureRankingsTable,
   ensurePhotoDataColumn,
   savePhotos,
   getPhotosByUpdateIds,

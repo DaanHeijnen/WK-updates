@@ -39,3 +39,10 @@ CREATE TABLE IF NOT EXISTS match_cache (
     payload JSONB NOT NULL,
     fetched_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+
+CREATE TABLE IF NOT EXISTS rankings (
+    id INT PRIMARY KEY DEFAULT 1,
+    names JSONB NOT NULL DEFAULT '[]'::jsonb,
+    updated_at TIMESTAMP NULL
+);

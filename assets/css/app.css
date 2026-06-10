@@ -885,28 +885,109 @@ img { max-width: 100%; height: auto; }
   }
 }
 
-/* Force update card order: title/text, photos, then like button. */
-.update-inner {
+.page-rankings {
+  width: min(100%, 760px);
+}
+
+.ranking-update-panel {
+  margin-top: 28px;
+  display: grid;
+  gap: 6px;
+  background: rgba(255,255,255,.72);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.ranking-update-panel strong {
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.ranking-update-panel span {
+  color: var(--muted);
+  font-size: .94rem;
+}
+
+.rankings-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ranking;
+}
+
+.ranking-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 18px;
+  padding: clamp(16px, 4vw, 22px);
+  background: rgba(255,255,255,.86);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 22px rgba(82,36,16,.06);
+}
+
+.ranking-item:first-child {
+  border-color: var(--orange);
+  background: #fffaf7;
+  box-shadow: var(--shadow);
+}
+
+.ranking-number {
+  width: clamp(48px, 12vw, 64px);
+  height: clamp(48px, 12vw, 64px);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #fff;
+  font-family: ImpactFallback, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(1.8rem, 6vw, 2.7rem);
+  line-height: .9;
+}
+
+.ranking-name {
+  min-width: 0;
+  color: var(--ink);
+  font-family: ImpactFallback, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  text-transform: uppercase;
+  font-size: clamp(2.1rem, 8vw, 3.9rem);
+  line-height: .88;
+  letter-spacing: -.04em;
+  overflow-wrap: anywhere;
+}
+
+.admin-help {
+  margin: -4px 0 24px;
+  color: var(--muted);
+  font-size: 1.02rem;
+}
+
+.admin-topline-actions {
   display: flex;
-  flex-direction: column;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.update-meta {
-  order: 1;
-}
+@media (max-width: 920px) {
+  .site-header .site-nav {
+    grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  }
 
-.update-card h3 {
-  order: 2;
-}
+  .ranking-item {
+    gap: 14px;
+  }
 
-.update-content {
-  order: 3;
-}
+  .admin-topline-actions {
+    justify-content: stretch;
+  }
 
-.photo-grid {
-  order: 4;
-}
-
-.update-footer {
-  order: 5;
+  .admin-topline-actions .btn {
+    width: 100%;
+  }
 }

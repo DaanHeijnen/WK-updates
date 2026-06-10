@@ -526,3 +526,106 @@ async function initMatches() {
 }
 
 if (page === 'matches') initMatches();
+
+function formatAmsterdamDateTime(value) {
+  if (!value) return 'Nog niet bijgewerkt';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Onbekend';
+  return new Intl.DateTimeFormat('nl-NL', {
+    timeZone: 'Europe/Amsterdam',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
+}
+
+function renderRankingNames(names = []) {
+  return names.map((name, index) => `
+    <li class="ranking-item">
+      <span class="ranking-number">${index + 1}</span>
+      <span class="ranking-name">${escapeHtml(name)}</span>
+    </li>
+  `).join('');
+}
+
+async function initRankings() {
+  const loading = $('#rankings-loading');
+  const empty = $('#rankings-empty');
+  const error = $('#rankings-error');
+  const list = $('#rankings-list');
+  const updatedAt = $('#ranking-updated-at');
+
+  try {
+    const data = await request('/rankings');
+    const ranking = data.ranking || {};
+    const names = Array.isArray(ranking.names) ? ranking.names : [];
+    loading.hidden = true;
+    updatedAt.textContent = formatAmsterdamDateTime(ranking.updatedAt);
+
+    if (!names.length) {
+      empty.hidden = false;
+      return;
+    }
+
+    list.innerHTML = renderRankingNames(names);
+  } catch (err) {
+    loading.hidden = true;
+    error.textContent = err.message;
+    error.hidden = false;
+  }
+}
+
+function parseRankingInput(value) {
+  return String(value || '')
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*(?:\d+[.)-]?\s*|[-*•]\s*)/, '').trim())
+    .filter(Boolean);
+}
+
+async function initAdminRankings() {
+  await requireLogin();
+  initLogout();
+
+  const form = $('#ranking-form');
+  const textarea = form.elements.rankingText;
+  const message = $('#ranking-admin-message');
+  const error = $('#ranking-admin-error');
+
+  try {
+    const data = await request('/rankings');
+    const names = data.ranking && Array.isArray(data.ranking.names) ? data.ranking.names : [];
+    if (names.length) textarea.value = names.map((name, index) => `${index + 1}. ${name}`).join('\n');
+  } catch (_) {}
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    message.hidden = true;
+    error.hidden = true;
+
+    const names = parseRankingInput(textarea.value);
+    if (names.length !== 10) {
+      error.textContent = `Je hebt ${names.length} namen ingevuld. Vul precies 10 namen in.`;
+      error.hidden = false;
+      return;
+    }
+
+    try {
+      const data = await request('/rankings-update', {
+        method: 'POST',
+        body: JSON.stringify({ names })
+      });
+      const updatedAt = data.ranking ? data.ranking.updatedAt : null;
+      message.textContent = `Ranking opgeslagen. Laatst bijgewerkt: ${formatAmsterdamDateTime(updatedAt)}.`;
+      message.hidden = false;
+      textarea.value = names.map((name, index) => `${index + 1}. ${name}`).join('\n');
+    } catch (err) {
+      error.textContent = err.message;
+      error.hidden = false;
+    }
+  });
+}
+
+if (page === 'rankings') initRankings();
+if (page === 'admin-rankings') initAdminRankings();

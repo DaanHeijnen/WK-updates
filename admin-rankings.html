@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#8f2d00">
-  <title>Nieuwe update - Oranje Updates</title>
+  <title>Ranking beheren - Oranje Updates</title>
   <link rel="stylesheet" href="/assets/css/app.css?v=rankings-1">
 </head>
-<body data-page="admin-create">
+<body data-page="admin-rankings">
   <header class="site-header">
     <a class="brand" href="/" aria-label="Oranje Updates startpagina">
       <span class="ball">⚽</span>
@@ -24,16 +24,17 @@
   <main class="page admin-page">
     <section class="panel">
       <p class="eyebrow">Admin console</p>
-      <h1>Create new update</h1>
-      <form id="update-form" class="form">
-        <label>Headline<input type="text" name="title" required maxlength="255" placeholder="E.g. Netherlands clinch dramatic win"></label>
-        <label>Story<textarea name="contentMarkdown" rows="12" required placeholder="Start writing the full story here... Markdown is supported."></textarea></label>
-        <label>Featured image<input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple></label>
+      <h1>Ranking beheren</h1>
+      <p class="admin-help">Plak precies 10 namen in het veld hieronder. Zet iedere naam op een eigen regel. Na opslaan wordt de bestaande ranking volledig vervangen.</p>
+      <form id="ranking-form" class="form">
+        <label>Ranking top 10<textarea name="rankingText" rows="10" required placeholder="1. Daan&#10;2. Moise&#10;3. Jorrit&#10;4. Alexander&#10;5. Annemiek&#10;6. ..."></textarea></label>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit">Publiceer update</button>
-          <a class="btn btn-secondary" href="/admin-overview.html">Annuleren</a>
+          <button class="btn btn-primary" type="submit">Ranking opslaan</button>
+          <a class="btn btn-secondary" href="/admin-overview.html">Terug naar dashboard</a>
+          <a class="btn btn-ghost" href="/rankings.html">Bekijk rankings</a>
         </div>
-        <p id="form-error" class="error-message" hidden></p>
+        <p id="ranking-admin-message" class="notice" hidden></p>
+        <p id="ranking-admin-error" class="error-message" hidden></p>
       </form>
     </section>
   </main>

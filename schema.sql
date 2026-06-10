@@ -32,3 +32,10 @@ CREATE TABLE IF NOT EXISTS update_photos (
 
 CREATE INDEX IF NOT EXISTS idx_updates_created_at ON updates(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_update_photos_update_id ON update_photos(update_id);
+
+
+CREATE TABLE IF NOT EXISTS rankings (
+    id INT PRIMARY KEY DEFAULT 1,
+    names JSONB NOT NULL DEFAULT '[]'::jsonb,
+    updated_at TIMESTAMP NULL
+);
