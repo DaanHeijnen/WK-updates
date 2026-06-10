@@ -9,6 +9,41 @@ function token() { return localStorage.getItem(tokenKey); }
 function setToken(value) { localStorage.setItem(tokenKey, value); }
 function clearToken() { localStorage.removeItem(tokenKey); }
 
+
+function enhanceAdminNavigation() {
+  const nav = document.querySelector('.site-nav');
+  if (!nav) return;
+
+  const adminToken = token();
+  const existingAdminLink = nav.querySelector('a[href="/admin-overview.html"]');
+  const existingLogoutButton = nav.querySelector('#logout-button');
+
+  if (!adminToken) {
+    if (existingAdminLink && existingAdminLink.dataset.dynamicAdminNav === 'true') existingAdminLink.remove();
+    if (existingLogoutButton && existingLogoutButton.dataset.dynamicAdminNav === 'true') existingLogoutButton.remove();
+    return;
+  }
+
+  if (!existingAdminLink) {
+    const adminLink = document.createElement('a');
+    adminLink.href = '/admin-overview.html';
+    adminLink.textContent = 'Admin dashboard';
+    adminLink.dataset.dynamicAdminNav = 'true';
+    if (window.location.pathname.includes('admin-')) adminLink.setAttribute('aria-current', 'page');
+    nav.appendChild(adminLink);
+  }
+
+  if (!existingLogoutButton) {
+    const logoutButton = document.createElement('button');
+    logoutButton.className = 'nav-button';
+    logoutButton.id = 'logout-button';
+    logoutButton.type = 'button';
+    logoutButton.textContent = 'Uitloggen';
+    logoutButton.dataset.dynamicAdminNav = 'true';
+    nav.appendChild(logoutButton);
+  }
+}
+
 function getLikedUpdates() {
   try {
     const value = JSON.parse(localStorage.getItem(likedUpdatesKey) || '[]');
@@ -190,11 +225,13 @@ async function requireLogin() {
 }
 
 function initLogout() {
-  const button = $('#logout-button');
-  if (!button) return;
-  button.addEventListener('click', () => {
-    clearToken();
-    window.location.href = '/admin-login.html';
+  $all('#logout-button').forEach((button) => {
+    if (button.dataset.logoutBound === 'true') return;
+    button.dataset.logoutBound = 'true';
+    button.addEventListener('click', () => {
+      clearToken();
+      window.location.href = '/admin-login.html';
+    });
   });
 }
 
@@ -383,6 +420,8 @@ async function initSetup() {
 }
 
 const page = document.body.dataset.page;
+enhanceAdminNavigation();
+initLogout();
 initShare();
 if (page === 'feed') initFeed();
 if (page === 'login') initLogin();
