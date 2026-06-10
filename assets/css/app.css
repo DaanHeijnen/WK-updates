@@ -884,3 +884,29 @@ img { max-width: 100%; height: auto; }
     animation: none !important;
   }
 }
+
+/* Force update card order: title/text, photos, then like button. */
+.update-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.update-meta {
+  order: 1;
+}
+
+.update-card h3 {
+  order: 2;
+}
+
+.update-content {
+  order: 3;
+}
+
+.photo-grid {
+  order: 4;
+}
+
+.update-footer {
+  order: 5;
+}
