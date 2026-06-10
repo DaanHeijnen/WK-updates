@@ -15,32 +15,58 @@ function enhanceAdminNavigation() {
   if (!nav) return;
 
   const adminToken = token();
-  const existingAdminLink = nav.querySelector('a[href="/admin-overview.html"]');
-  const existingLogoutButton = nav.querySelector('#logout-button');
+
+  const adminLinks = [...nav.querySelectorAll('a')].filter((link) => {
+    const href = link.getAttribute('href') || '';
+    return href === '/admin-overview.html'
+      || href === 'admin-overview.html'
+      || link.pathname === '/admin-overview.html'
+      || link.textContent.trim().toLowerCase() === 'admin dashboard';
+  });
+
+  const logoutButtons = [...nav.querySelectorAll('button, a')].filter((item) => {
+    return item.id === 'logout-button'
+      || item.dataset.adminLogout === 'true'
+      || item.textContent.trim().toLowerCase() === 'uitloggen';
+  });
+
+  // Keep only one admin dashboard link and one logout button.
+  adminLinks.slice(1).forEach((link) => link.remove());
+  logoutButtons.slice(1).forEach((button) => button.remove());
+
+  let adminLink = adminLinks[0] || null;
+  let logoutButton = logoutButtons[0] || null;
 
   if (!adminToken) {
-    if (existingAdminLink && existingAdminLink.dataset.dynamicAdminNav === 'true') existingAdminLink.remove();
-    if (existingLogoutButton && existingLogoutButton.dataset.dynamicAdminNav === 'true') existingLogoutButton.remove();
+    if (adminLink && adminLink.dataset.dynamicAdminNav === 'true') adminLink.remove();
+    if (logoutButton && logoutButton.dataset.dynamicAdminNav === 'true') logoutButton.remove();
     return;
   }
 
-  if (!existingAdminLink) {
-    const adminLink = document.createElement('a');
+  if (!adminLink) {
+    adminLink = document.createElement('a');
     adminLink.href = '/admin-overview.html';
     adminLink.textContent = 'Admin dashboard';
     adminLink.dataset.dynamicAdminNav = 'true';
-    if (window.location.pathname.includes('admin-')) adminLink.setAttribute('aria-current', 'page');
     nav.appendChild(adminLink);
   }
 
-  if (!existingLogoutButton) {
-    const logoutButton = document.createElement('button');
+  if (window.location.pathname.includes('admin-')) {
+    adminLink.setAttribute('aria-current', 'page');
+  }
+
+  if (!logoutButton) {
+    logoutButton = document.createElement('button');
     logoutButton.className = 'nav-button';
     logoutButton.id = 'logout-button';
     logoutButton.type = 'button';
     logoutButton.textContent = 'Uitloggen';
     logoutButton.dataset.dynamicAdminNav = 'true';
+    logoutButton.dataset.adminLogout = 'true';
     nav.appendChild(logoutButton);
+  } else {
+    logoutButton.id = 'logout-button';
+    logoutButton.dataset.adminLogout = 'true';
   }
 }
 
