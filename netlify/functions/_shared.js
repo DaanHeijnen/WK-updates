@@ -82,7 +82,7 @@ function requireAdmin(event) {
 function signAdmin(admin) {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error('JWT_SECRET ontbreekt.');
-  return jwt.sign({ adminId: admin.id, email: admin.email }, secret, { expiresIn: '8h' });
+  return jwt.sign({ adminId: admin.id, email: admin.email }, secret, { expiresIn: process.env.ADMIN_SESSION_DURATION || '90d' });
 }
 
 async function hashPassword(password) {
