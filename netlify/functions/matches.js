@@ -504,13 +504,18 @@ exports.handler = async (event) => {
     const cacheKey = `worldcup26-games-v6-${cfg.timezone}`;
     const payload = await withDb(async (client) => {
       await ensureCacheTable(client);
-      const cached = await getFreshCache(client, cacheKey, cfg.cacheMinutes);
-      if (cached) return { ...cached, cached: true };
+      const params = event.queryStringParameters || {};
+      const forceFresh = params.fresh === '1' || params.refresh === '1';
+
+      if (!forceFresh) {
+        const cached = await getFreshCache(client, cacheKey, cfg.cacheMinutes);
+        if (cached) return { ...cached, cached: true };
+      }
 
       try {
         const fresh = await buildPayload(cfg);
         await saveCache(client, cacheKey, fresh);
-        return { ...fresh, cached: false };
+        return { ...fresh, cached: false, forcedRefresh: forceFresh };
       } catch (apiError) {
         const stale = await getAnyCache(client, cacheKey);
         if (stale) return { ...stale, cached: true, stale: true, warning: apiError.message };

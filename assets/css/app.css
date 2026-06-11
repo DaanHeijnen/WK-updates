@@ -399,6 +399,34 @@ img { max-width: 100%; height: auto; }
   font-size: .94rem;
 }
 
+
+.refresh-button {
+  justify-self: start;
+  margin-top: 8px;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 16px;
+  background: var(--orange);
+  color: #fff;
+  font-size: .78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  cursor: pointer;
+  box-shadow: 0 10px 18px rgba(143,45,0,.16);
+}
+
+.refresh-button:hover {
+  transform: translateY(-1px);
+}
+
+.refresh-button:disabled {
+  cursor: wait;
+  opacity: .62;
+  transform: none;
+}
+
 .matches-list {
   display: grid;
   gap: 28px;
@@ -1180,4 +1208,14 @@ img { max-width: 100%; height: auto; }
 .poule-points.is-pending {
   background: #f3f3f3;
   color: var(--muted);
+}
+
+.poule-final-card {
+  border-color: rgba(255, 168, 0, 0.48);
+  box-shadow: 0 18px 46px rgba(143, 45, 0, 0.2);
+}
+
+.poule-final-title {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }

@@ -207,7 +207,7 @@ function initShare() {
   if (!button) return;
   button.addEventListener('click', async () => {
     const shareData = {
-      title: 'Oranje Updates',
+      title: 'Poule van Moise',
       text: 'Bekijk de laatste WK-updates van Oranje.',
       url: window.location.origin
     };
@@ -457,13 +457,16 @@ if (page === 'admin-edit') initEdit();
 if (page === 'setup') initSetup();
 
 
+let matchesUpdatedCounterInterval = null;
+let matchesPollTimeout = null;
+
 function formatLastUpdated(value) {
   if (!value) return 'Nog niet bijgewerkt';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Onbekend';
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
-  if (diffSeconds < 15) return 'zojuist bijgewerkt';
-  if (diffSeconds < 60) return `${diffSeconds} seconden geleden bijgewerkt`;
+  if (diffSeconds < 1) return 'zojuist bijgewerkt';
+  if (diffSeconds < 120) return `${diffSeconds} ${diffSeconds === 1 ? 'seconde' : 'seconden'} geleden bijgewerkt`;
   const minutes = Math.floor(diffSeconds / 60);
   if (minutes < 60) return `${minutes} ${minutes === 1 ? 'minuut' : 'minuten'} geleden bijgewerkt`;
   const hours = Math.floor(minutes / 60);
@@ -475,11 +478,17 @@ function formatLastUpdated(value) {
 function startLastUpdatedCounter(value) {
   const box = $('#matches-updated-counter');
   if (!box) return;
+  if (matchesUpdatedCounterInterval) window.clearInterval(matchesUpdatedCounterInterval);
   const render = () => {
     box.textContent = `Scores ${formatLastUpdated(value)}`;
   };
   render();
-  window.setInterval(render, 30000);
+  matchesUpdatedCounterInterval = window.setInterval(render, 1000);
+}
+
+function stopMatchesPolling() {
+  if (matchesPollTimeout) window.clearTimeout(matchesPollTimeout);
+  matchesPollTimeout = null;
 }
 
 function formatMatchDay(value) {
@@ -543,51 +552,106 @@ async function initMatches() {
   const todayBox = $('#today-matches');
   const playedBox = $('#played-matches');
   const upcomingBox = $('#upcoming-matches');
+  const sourceInfo = $('#matches-source-info');
+  let didInitialScroll = false;
+  let isLoading = false;
 
-  try {
-    const data = await request('/matches');
-    const matches = data.matches || [];
-    const todayKey = data.todayKey;
-    startLastUpdatedCounter(data.lastUpdatedAt || data.fetchedAt);
-    const sourceInfo = $('#matches-source-info');
-    if (sourceInfo) {
-      const warning = data.warning ? ` Laatst bekende data wordt getoond: ${data.warning}` : '';
-      sourceInfo.textContent = `${data.sourceLabel || 'WK scoreprovider'}${data.cached ? ' · uit cache' : ' · net opgehaald'}${warning}`;
-      sourceInfo.hidden = false;
-    }
-    const today = matches.filter((match) => match.dateKey === todayKey);
-    const played = matches.filter((match) => match.state === 'played' && match.dateKey !== todayKey).reverse();
-    const upcoming = matches.filter((match) => match.state !== 'played' && match.dateKey !== todayKey);
+  const scheduleNextRefresh = (matches, todayKey, loadMatches) => {
+    stopMatchesPolling();
+    if (document.hidden) return;
 
-    loading.hidden = true;
+    const hasLive = matches.some((match) => match.state === 'live');
+    const hasUpcomingToday = matches.some((match) => match.dateKey === todayKey && match.state === 'upcoming');
+    const delay = hasLive ? 60000 : hasUpcomingToday ? 300000 : null;
+    if (!delay) return;
 
-    if (today.length) {
-      todaySection.hidden = false;
-      const firstNotPlayed = today.find((match) => match.state !== 'played') || today[0];
-      todayBox.innerHTML = today.map((match) => renderMatch(match, { today: true, scrollTarget: match.id === firstNotPlayed.id })).join('');
-    }
-    if (played.length) {
-      playedSection.hidden = false;
-      playedBox.innerHTML = played.map((match) => renderMatch(match)).join('');
-    }
-    if (upcoming.length) {
-      upcomingSection.hidden = false;
-      upcomingBox.innerHTML = upcoming.map((match) => renderMatch(match)).join('');
-    }
-    if (!matches.length) {
-      loading.textContent = 'Er zijn nog geen wedstrijden gevonden.';
-      loading.hidden = false;
-    }
+    matchesPollTimeout = window.setTimeout(() => {
+      loadMatches({ silent: true, forceFresh: true });
+    }, delay);
+  };
 
-    setTimeout(() => {
-      const target = document.querySelector('[data-scroll-target="true"]') || todaySection;
-      if (target && !todaySection.hidden) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 450);
-  } catch (err) {
-    loading.hidden = true;
-    error.textContent = err.message;
-    error.hidden = false;
-  }
+  const loadMatches = async (options = {}) => {
+    if (isLoading) return;
+    isLoading = true;
+    const { silent = false, forceFresh = false } = options;
+
+    try {
+      if (!silent) {
+        loading.hidden = false;
+        loading.textContent = 'Wedstrijden worden geladen...';
+      }
+      error.hidden = true;
+
+      const data = await request(`/matches${forceFresh ? '?fresh=1' : ''}`);
+      const matches = data.matches || [];
+      const todayKey = data.todayKey;
+      startLastUpdatedCounter(new Date().toISOString());
+
+      if (sourceInfo) {
+        const hasLive = matches.some((match) => match.state === 'live');
+        const hasUpcomingToday = matches.some((match) => match.dateKey === todayKey && match.state === 'upcoming');
+        const refreshText = hasLive
+          ? ' · live refresh elke 60 sec'
+          : hasUpcomingToday
+            ? ' · checkt vandaag elke 5 min'
+            : ' · geen live refresh nodig';
+        const warning = data.warning ? ` Laatst bekende data wordt getoond: ${data.warning}` : '';
+        sourceInfo.textContent = `${data.sourceLabel || 'WK scoreprovider'}${data.cached ? ' · uit cache' : ' · net opgehaald'}${refreshText}${warning}`;
+        sourceInfo.hidden = false;
+      }
+
+      const today = matches.filter((match) => match.dateKey === todayKey);
+      const played = matches.filter((match) => match.state === 'played' && match.dateKey !== todayKey).reverse();
+      const upcoming = matches.filter((match) => match.state !== 'played' && match.dateKey !== todayKey);
+
+      loading.hidden = true;
+      todaySection.hidden = !today.length;
+      playedSection.hidden = !played.length;
+      upcomingSection.hidden = !upcoming.length;
+      todayBox.innerHTML = '';
+      playedBox.innerHTML = '';
+      upcomingBox.innerHTML = '';
+
+      if (today.length) {
+        const firstNotPlayed = today.find((match) => match.state !== 'played') || today[0];
+        todayBox.innerHTML = today.map((match) => renderMatch(match, { today: true, scrollTarget: match.id === firstNotPlayed.id })).join('');
+      }
+      if (played.length) playedBox.innerHTML = played.map((match) => renderMatch(match)).join('');
+      if (upcoming.length) upcomingBox.innerHTML = upcoming.map((match) => renderMatch(match)).join('');
+
+      if (!matches.length) {
+        loading.textContent = 'Er zijn nog geen wedstrijden gevonden.';
+        loading.hidden = false;
+      }
+
+      if (!didInitialScroll) {
+        didInitialScroll = true;
+        setTimeout(() => {
+          const target = document.querySelector('[data-scroll-target="true"]') || todaySection;
+          if (target && !todaySection.hidden) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 450);
+      }
+
+      scheduleNextRefresh(matches, todayKey, loadMatches);
+    } catch (err) {
+      loading.hidden = true;
+      error.textContent = err.message;
+      error.hidden = false;
+      stopMatchesPolling();
+    } finally {
+      isLoading = false;
+    }
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopMatchesPolling();
+      return;
+    }
+    loadMatches({ silent: true, forceFresh: true });
+  });
+
+  loadMatches();
 }
 
 if (page === 'matches') initMatches();
@@ -1014,12 +1078,31 @@ function renderKnockoutPredictionRows(predictions, byDate) {
     const points = calculateKnockoutPredictionPoints(prediction, actual);
     return `<tr>
       <td data-label="Date">${escapeHtml(prediction.date)}</td>
-      <td data-label="Round">${escapeHtml(prediction.round)}</td>
       <td data-label="Predicted"><strong>${escapeHtml(prediction.predicted)}</strong></td>
       <td data-label="Reality"><span class="poule-reality ${actualClass}">${escapeHtml(pouleActualLabel(actual, { teamsOnly: true, unknown: 'Not known yet' }))}</span></td>
       <td data-label="Points">${renderPoulePoints(points)}</td>
     </tr>`;
   });
+}
+
+const pouleKnockoutSections = [
+  { title: 'Zestiende finale', round: 'Round of 32' },
+  { title: 'Achtste finale', round: 'Round of 16' },
+  { title: 'Kwartfinales', round: 'Quarterfinal' },
+  { title: 'Halve finales', round: 'Semifinal' },
+  { title: 'Troost finale', round: 'Third place' },
+  { title: 'THE FINAL!', round: 'Final', final: true }
+];
+
+function renderKnockoutPredictionSections(predictions, byDate) {
+  return pouleKnockoutSections.map((section) => {
+    const sectionPredictions = predictions.filter((prediction) => prediction.round === section.round);
+    if (!sectionPredictions.length) return '';
+    return `<article class="poule-card ${section.final ? 'poule-final-card' : ''}">
+      <h3 class="${section.final ? 'poule-final-title' : ''}">${escapeHtml(section.title)}</h3>
+      ${renderPouleTable(['Date', 'Predicted', 'Reality', 'Points'], renderKnockoutPredictionRows(sectionPredictions, byDate))}
+    </article>`;
+  }).join('');
 }
 
 function renderPouleBonus() {
@@ -1042,45 +1125,71 @@ async function initPoule() {
   const knockoutSection = $('#poule-knockout-section');
   const groupBox = $('#poule-groups');
   const knockoutBox = $('#poule-knockouts');
+  const refreshButton = $('#poule-refresh');
+  let isLoading = false;
 
   renderPouleBonus();
 
-  try {
-    const data = await request('/matches');
-    const matches = data.matches || [];
-    const indexes = buildPouleIndexes(matches);
+  const loadPoule = async (options = {}) => {
+    if (isLoading) return;
+    isLoading = true;
+    const { forceFresh = false } = options;
 
-    const grouped = pouleGroupPredictions.reduce((acc, item) => {
-      if (!acc[item.group]) acc[item.group] = [];
-      acc[item.group].push(item);
-      return acc;
-    }, {});
+    try {
+      error.hidden = true;
+      if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.textContent = forceFresh ? 'Updating...' : 'Loading...';
+      }
+      if (!forceFresh) loading.hidden = false;
 
-    groupBox.innerHTML = Object.entries(grouped).map(([group, predictions]) => `
-      <article class="poule-card">
-        <h3>${escapeHtml(group)}</h3>
-        ${renderPouleTable(['Date', 'Match', 'Predicted', 'Reality', 'Points'], renderGroupPredictionRows(predictions, indexes.byTeam))}
-      </article>
-    `).join('');
+      const data = await request(`/matches${forceFresh ? '?fresh=1' : ''}`);
+      const matches = data.matches || [];
+      const indexes = buildPouleIndexes(matches);
 
-    knockoutBox.innerHTML = `<article class="poule-card">
-      ${renderPouleTable(['Date', 'Round', 'Predicted', 'Reality', 'Points'], renderKnockoutPredictionRows(pouleKnockoutPredictions, indexes.byDate))}
-    </article>`;
+      const grouped = pouleGroupPredictions.reduce((acc, item) => {
+        if (!acc[item.group]) acc[item.group] = [];
+        acc[item.group].push(item);
+        return acc;
+      }, {});
 
-    loading.hidden = true;
-    groupSection.hidden = false;
-    knockoutSection.hidden = false;
-    status.textContent = `Reality loaded for ${matches.length} matches`;
-    if (source) {
-      source.textContent = `${data.sourceLabel || 'WK scoreprovider'}${data.cached ? ' · from cache' : ' · just fetched'}`;
-      source.hidden = false;
+      groupBox.innerHTML = Object.entries(grouped).map(([group, predictions]) => `
+        <article class="poule-card">
+          <h3>${escapeHtml(group)}</h3>
+          ${renderPouleTable(['Date', 'Match', 'Predicted', 'Reality', 'Points'], renderGroupPredictionRows(predictions, indexes.byTeam))}
+        </article>
+      `).join('');
+
+      knockoutBox.innerHTML = renderKnockoutPredictionSections(pouleKnockoutPredictions, indexes.byDate);
+
+      loading.hidden = true;
+      groupSection.hidden = false;
+      knockoutSection.hidden = false;
+      status.textContent = `Reality loaded for ${matches.length} matches`;
+      if (source) {
+        const when = formatLastUpdated(new Date().toISOString()).replace(' bijgewerkt', '');
+        source.textContent = `${data.sourceLabel || 'WK scoreprovider'}${data.cached ? ' · from cache' : ' · just fetched'} · page updated ${when}`;
+        source.hidden = false;
+      }
+    } catch (err) {
+      loading.hidden = true;
+      error.textContent = err.message;
+      error.hidden = false;
+      status.textContent = 'Reality could not be loaded';
+    } finally {
+      if (refreshButton) {
+        refreshButton.disabled = false;
+        refreshButton.textContent = 'Update scores';
+      }
+      isLoading = false;
     }
-  } catch (err) {
-    loading.hidden = true;
-    error.textContent = err.message;
-    error.hidden = false;
-    status.textContent = 'Reality could not be loaded';
+  };
+
+  if (refreshButton) {
+    refreshButton.addEventListener('click', () => loadPoule({ forceFresh: true }));
   }
+
+  loadPoule();
 }
 
 if (page === 'poule') initPoule();

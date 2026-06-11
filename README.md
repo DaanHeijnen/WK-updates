@@ -1,4 +1,4 @@
-# Oranje Updates - Netlify productieversie
+# Poule van Moise - Netlify productieversie
 
 Dit is een Netlify-native webapp voor WK-updates, uitslagen en wedstrijden.
 
