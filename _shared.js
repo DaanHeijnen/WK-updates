@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { marked } = require('marked');
 const sanitizeHtml = require('sanitize-html');
+const { connectLambda, getStore } = require('@netlify/blobs');
 
 function json(statusCode, data, headers = {}) {
   return {
@@ -102,19 +103,28 @@ function parseBody(event) {
   }
 }
 
+const photoStoreName = 'wk-update-photos';
 
-async function ensureRankingsTable(client) {
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS rankings (
-      id INT PRIMARY KEY DEFAULT 1,
-      names JSONB NOT NULL DEFAULT '[]'::jsonb,
-      updated_at TIMESTAMP NULL
-    );
-  `);
+function getBlobConfig() {
+  const siteID = process.env.NETLIFY_BLOBS_SITE_ID || process.env.BLOBS_SITE_ID || process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+  const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.BLOBS_TOKEN || process.env.NETLIFY_AUTH_TOKEN;
+
+  if (siteID && token) {
+    return { name: photoStoreName, siteID, token };
+  }
+
+  return null;
 }
 
-async function ensurePhotoDataColumn(client) {
-  await client.query('ALTER TABLE update_photos ADD COLUMN IF NOT EXISTS file_data BYTEA');
+function photoStore(event) {
+  const manualConfig = getBlobConfig();
+  if (manualConfig) return getStore(manualConfig);
+
+  if (event && typeof connectLambda === 'function') {
+    connectLambda(event);
+  }
+
+  return getStore(photoStoreName);
 }
 
 const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -140,23 +150,22 @@ function safeFileName(name) {
   return clean || 'foto';
 }
 
-async function savePhotos(client, updateId, photos = []) {
+async function savePhotos(client, updateId, photos = [], event) {
   if (!Array.isArray(photos) || photos.length === 0) return;
   if (photos.length > maxImagesPerRequest) throw new Error('Je kunt maximaal 5 foto’s per keer uploaden.');
 
-  await ensurePhotoDataColumn(client);
-
+  const store = photoStore(event);
   for (let index = 0; index < photos.length; index += 1) {
     const photo = photos[index];
     const { mimeType, buffer } = decodeDataUrl(photo.dataUrl);
     const originalName = safeFileName(photo.name);
     const extension = mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg';
     const blobKey = `updates/${updateId}/${Date.now()}-${Math.random().toString(16).slice(2)}.${extension}`;
-
+    await store.set(blobKey, buffer, { metadata: { contentType: mimeType, originalName } });
     await client.query(
-      `INSERT INTO update_photos (update_id, file_name, blob_key, mime_type, file_size, alt_text, sort_order, file_data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [updateId, originalName, blobKey, mimeType, buffer.length, photo.altText || null, index, buffer]
+      `INSERT INTO update_photos (update_id, file_name, blob_key, mime_type, file_size, alt_text, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [updateId, originalName, blobKey, mimeType, buffer.length, photo.altText || null, index]
     );
   }
 }
@@ -181,8 +190,13 @@ async function getPhotosByUpdateIds(client, updateIds) {
   return map;
 }
 
-async function deletePhotos(client, photoIds) {
+async function deletePhotos(client, photoIds, event) {
   if (!Array.isArray(photoIds) || photoIds.length === 0) return;
+  const result = await client.query(`SELECT id, blob_key FROM update_photos WHERE id = ANY($1::int[])`, [photoIds.map(Number)]);
+  const store = photoStore(event);
+  for (const photo of result.rows) {
+    await store.delete(photo.blob_key);
+  }
   await client.query(`DELETE FROM update_photos WHERE id = ANY($1::int[])`, [photoIds.map(Number)]);
 }
 
@@ -195,8 +209,7 @@ module.exports = {
   hashPassword,
   verifyPassword,
   parseBody,
-  ensureRankingsTable,
-  ensurePhotoDataColumn,
+  photoStore,
   savePhotos,
   getPhotosByUpdateIds,
   deletePhotos

@@ -4,36 +4,41 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#8f2d00">
-  <title>Poule van Moise</title>
-  <meta name="description" content="WK nieuws door Moise Maatje. Lees de nieuwste Poule van Moise.">
+  <title>Rankings | Poule van Moise</title>
+  <meta name="description" content="Bekijk de actuele WK ranking van Poule van Moise.">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="stylesheet" href="/assets/css/app.css?v=polling-2">
 </head>
-<body data-page="feed">
+<body data-page="rankings">
   <header class="site-header">
     <a class="brand" href="/" aria-label="Poule van Moise startpagina">
       <span class="ball">⚽</span>
       <span>Poule van Moise</span>
     </a>
     <nav class="site-nav" aria-label="Hoofdnavigatie">
-      <a href="/" aria-current="page">Updates</a>
+      <a href="/">Updates</a>
       <a href="/wedstrijden.html">Wedstrijden</a>
-      <a href="/rankings.html">Rankings</a>
+      <a href="/rankings.html" aria-current="page">Rankings</a>
     </nav>
   </header>
 
-  <main class="page page-feed">
-    <section class="hero">
-      <p class="eyebrow">WK nieuws</p>
-      <h1>Alle Poule van Moise op één plek.</h1>
-      <p>Volg het laatste nieuws, wedstrijdupdates en korte berichten rondom het WK.</p>
+  <main class="page page-rankings">
+    <section class="hero rankings-hero">
+      <p class="eyebrow">Stand van zaken</p>
+      <h1>Current rankings.</h1>
+      <p>Bekijk de actuele top 10. De ranking wordt bijgewerkt door de admin.</p>
+      <div class="ranking-update-panel" aria-live="polite">
+        <strong>Laatst bijgewerkt</strong>
+        <span id="ranking-updated-at">Ranking wordt geladen...</span>
+      </div>
     </section>
 
-    <section class="updates-section">
-      <div class="section-title"><span></span><h2>Updates</h2></div>
-      <div id="updates-list" class="updates-list"></div>
-      <p id="empty-feed" class="empty-state" hidden>Er zijn nog geen updates geplaatst.</p>
-      <p id="feed-error" class="error-message" hidden></p>
+    <section class="rankings-section">
+      <div class="section-title"><span></span><h2>Top 10</h2></div>
+      <p id="rankings-loading" class="empty-state">Ranking wordt geladen...</p>
+      <p id="rankings-empty" class="empty-state" hidden>Er is nog geen ranking geplaatst.</p>
+      <p id="rankings-error" class="error-message" hidden></p>
+      <ol id="rankings-list" class="rankings-list"></ol>
     </section>
   </main>
 

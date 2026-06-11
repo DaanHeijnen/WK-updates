@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#8f2d00">
-  <title>Updates beheren - Poule van Moise</title>
+  <title>Ranking beheren - Poule van Moise</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="stylesheet" href="/assets/css/app.css?v=polling-2">
 </head>
-<body data-page="admin-overview">
+<body data-page="admin-rankings">
   <header class="site-header">
     <a class="brand" href="/" aria-label="Poule van Moise startpagina">
       <span class="ball">⚽</span>
@@ -23,15 +23,21 @@
     </nav>
   </header>
   <main class="page admin-page">
-    <div class="admin-topline">
-      <div><p class="eyebrow">Admin</p><h1>Updates beheren</h1></div>
-      <div class="admin-topline-actions">
-        <a class="btn btn-primary" href="/admin-create.html">Nieuwe update</a>
-        <a class="btn btn-secondary" href="/admin-rankings.html">Ranking aanpassen</a>
-      </div>
-    </div>
-    <div id="admin-list" class="admin-list"></div>
-    <p id="admin-error" class="error-message" hidden></p>
+    <section class="panel">
+      <p class="eyebrow">Admin console</p>
+      <h1>Ranking beheren</h1>
+      <p class="admin-help">Plak precies 10 namen in het veld hieronder. Zet iedere naam op een eigen regel. Na opslaan wordt de bestaande ranking volledig vervangen.</p>
+      <form id="ranking-form" class="form">
+        <label>Ranking top 10<textarea name="rankingText" rows="10" required placeholder="1. Daan&#10;2. Moise&#10;3. Jorrit&#10;4. Alexander&#10;5. Annemiek&#10;6. ..."></textarea></label>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Ranking opslaan</button>
+          <a class="btn btn-secondary" href="/admin-overview.html">Terug naar dashboard</a>
+          <a class="btn btn-ghost" href="/rankings.html">Bekijk rankings</a>
+        </div>
+        <p id="ranking-admin-message" class="notice" hidden></p>
+        <p id="ranking-admin-error" class="error-message" hidden></p>
+      </form>
+    </section>
   </main>
   <footer class="site-footer">
     <div class="footer-inner">

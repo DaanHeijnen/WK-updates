@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8f2d00">
+  <title>Moise's World Cup Predictions | Poule van Moise</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Hidden World Cup prediction page.">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/css/app.css?v=polling-2">
+</head>
+<body data-page="poule">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Poule van Moise startpagina">
+      <span class="ball">⚽</span>
+      <span>Poule van Moise</span>
+    </a>
+    <nav class="site-nav" aria-label="Hoofdnavigatie">
+      <a href="/">Updates</a>
+      <a href="/wedstrijden.html">Wedstrijden</a>
+      <a href="/rankings.html">Rankings</a>
+    </nav>
+  </header>
+
+  <main class="page page-poule">
+    <section class="hero poule-hero">
+      <p class="eyebrow">Secret page</p>
+      <h1>Moise's predictions.</h1>
+      <p>My World Cup expectations from the PDF, with live reality from the existing match API.</p>
+      <div class="match-update-panel" aria-live="polite">
+        <strong id="poule-status">Reality is loading...</strong>
+        <span id="poule-source-info" hidden></span>
+        <button class="refresh-button" id="poule-refresh" type="button">Update scores</button>
+      </div>
+    </section>
+
+    <p id="poule-loading" class="empty-state">Predictions and results are loading...</p>
+    <p id="poule-error" class="error-message" hidden></p>
+
+    <section class="poule-section" id="poule-group-section" hidden>
+      <div class="section-title"><span></span><h2>Group stage</h2></div>
+      <div id="poule-groups" class="poule-groups"></div>
+    </section>
+
+    <section class="poule-section" id="poule-knockout-section" hidden>
+      <div class="section-title"><span></span><h2>Knockout stage</h2></div>
+      <div id="poule-knockouts" class="poule-knockouts"></div>
+    </section>
+
+    <section class="poule-section" id="poule-bonus-section">
+      <div class="section-title"><span></span><h2>Bonus predictions</h2></div>
+      <div id="poule-bonus" class="poule-bonus"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <h2>WK nieuws<br>door Moise<br>Maatje</h2>
+      <div class="footer-actions">
+        <button class="footer-link" id="share-site" type="button">Share</button>
+        <a class="footer-link" href="mailto:moisemaatje2@gmail.com">Contact</a>
+        <a class="footer-link" href="/admin-login.html">Admin login</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/assets/js/app.js?v=polling-2" defer></script>
+</body>
+</html>

@@ -38,10 +38,17 @@ exports.handler = async (event) => {
           file_size INT NOT NULL,
           alt_text VARCHAR(255) NULL,
           sort_order INT NOT NULL DEFAULT 0,
+          file_data BYTEA NULL,
           created_at TIMESTAMP NOT NULL DEFAULT NOW()
         );
         CREATE INDEX IF NOT EXISTS idx_updates_created_at ON updates(created_at DESC);
+        ALTER TABLE update_photos ADD COLUMN IF NOT EXISTS file_data BYTEA;
         CREATE INDEX IF NOT EXISTS idx_update_photos_update_id ON update_photos(update_id);
+        CREATE TABLE IF NOT EXISTS rankings (
+          id INT PRIMARY KEY DEFAULT 1,
+          names JSONB NOT NULL DEFAULT '[]'::jsonb,
+          updated_at TIMESTAMP NULL
+        );
         CREATE TABLE IF NOT EXISTS match_cache (
           id VARCHAR(80) PRIMARY KEY,
           payload JSONB NOT NULL,

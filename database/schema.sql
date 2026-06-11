@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS update_photos (
     file_size INT NOT NULL,
     alt_text VARCHAR(255) NULL,
     sort_order INT NOT NULL DEFAULT 0,
+    file_data BYTEA NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -37,4 +38,11 @@ CREATE TABLE IF NOT EXISTS match_cache (
     id VARCHAR(80) PRIMARY KEY,
     payload JSONB NOT NULL,
     fetched_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+
+CREATE TABLE IF NOT EXISTS rankings (
+    id INT PRIMARY KEY DEFAULT 1,
+    names JSONB NOT NULL DEFAULT '[]'::jsonb,
+    updated_at TIMESTAMP NULL
 );
