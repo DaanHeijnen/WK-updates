@@ -694,3 +694,305 @@ async function initAdminRankings() {
 
 if (page === 'rankings') initRankings();
 if (page === 'admin-rankings') initAdminRankings();
+
+const pouleGroupPredictions = [
+  { group: 'Group A', date: '11/06 21:00', home: 'Mexico', away: 'Zuid-Afrika', predicted: '2 - 0' },
+  { group: 'Group A', date: '12/06 04:00', home: 'Zuid-Korea', away: 'Tsjechië', predicted: '1 - 1' },
+  { group: 'Group A', date: '18/06 18:00', home: 'Tsjechië', away: 'Zuid-Afrika', predicted: '2 - 0' },
+  { group: 'Group A', date: '19/06 03:00', home: 'Mexico', away: 'Zuid-Korea', predicted: '2 - 1' },
+  { group: 'Group A', date: '25/06 03:00', home: 'Tsjechië', away: 'Mexico', predicted: '1 - 1' },
+  { group: 'Group A', date: '25/06 03:00', home: 'Zuid-Afrika', away: 'Zuid-Korea', predicted: '0 - 2' },
+  { group: 'Group B', date: '12/06 21:00', home: 'Canada', away: 'Bosnië & Herzegovina', predicted: '1 - 1' },
+  { group: 'Group B', date: '13/06 21:00', home: 'Qatar', away: 'Zwitserland', predicted: '0 - 2' },
+  { group: 'Group B', date: '18/06 21:00', home: 'Zwitserland', away: 'Bosnië & Herzegovina', predicted: '2 - 0' },
+  { group: 'Group B', date: '19/06 00:00', home: 'Canada', away: 'Qatar', predicted: '2 - 0' },
+  { group: 'Group B', date: '24/06 21:00', home: 'Zwitserland', away: 'Canada', predicted: '1 - 1' },
+  { group: 'Group B', date: '24/06 21:00', home: 'Bosnië & Herzegovina', away: 'Qatar', predicted: '2 - 1' },
+  { group: 'Group C', date: '14/06 00:00', home: 'Brazilië', away: 'Marokko', predicted: '2 - 1' },
+  { group: 'Group C', date: '14/06 03:00', home: 'Haïti', away: 'Schotland', predicted: '0 - 1' },
+  { group: 'Group C', date: '20/06 00:00', home: 'Schotland', away: 'Marokko', predicted: '0 - 1' },
+  { group: 'Group C', date: '20/06 03:00', home: 'Brazilië', away: 'Haïti', predicted: '3 - 0' },
+  { group: 'Group C', date: '25/06 00:00', home: 'Schotland', away: 'Brazilië', predicted: '0 - 2' },
+  { group: 'Group C', date: '25/06 00:00', home: 'Marokko', away: 'Haïti', predicted: '2 - 0' },
+  { group: 'Group D', date: '13/06 03:00', home: 'Verenigde Staten', away: 'Paraguay', predicted: '2 - 1' },
+  { group: 'Group D', date: '14/06 06:00', home: 'Australië', away: 'Turkije', predicted: '1 - 2' },
+  { group: 'Group D', date: '19/06 21:00', home: 'Verenigde Staten', away: 'Australië', predicted: '2 - 0' },
+  { group: 'Group D', date: '20/06 06:00', home: 'Turkije', away: 'Paraguay', predicted: '2 - 1' },
+  { group: 'Group D', date: '26/06 04:00', home: 'Turkije', away: 'Verenigde Staten', predicted: '1 - 2' },
+  { group: 'Group D', date: '26/06 04:00', home: 'Paraguay', away: 'Australië', predicted: '2 - 0' },
+  { group: 'Group E', date: '14/06 19:00', home: 'Duitsland', away: 'Curaçao', predicted: '4 - 0' },
+  { group: 'Group E', date: '15/06 01:00', home: 'Ivoorkust', away: 'Ecuador', predicted: '1 - 1' },
+  { group: 'Group E', date: '20/06 22:00', home: 'Duitsland', away: 'Ivoorkust', predicted: '2 - 1' },
+  { group: 'Group E', date: '21/06 02:00', home: 'Ecuador', away: 'Curaçao', predicted: '2 - 0' },
+  { group: 'Group E', date: '25/06 22:00', home: 'Ecuador', away: 'Duitsland', predicted: '1 - 1' },
+  { group: 'Group E', date: '25/06 22:00', home: 'Curaçao', away: 'Ivoorkust', predicted: '0 - 2' },
+  { group: 'Group F', date: '14/06 22:00', home: 'Nederland', away: 'Japan', predicted: '2 - 1' },
+  { group: 'Group F', date: '15/06 04:00', home: 'Zweden', away: 'Tunesië', predicted: '2 - 0' },
+  { group: 'Group F', date: '20/06 06:00', home: 'Tunesië', away: 'Japan', predicted: '0 - 2' },
+  { group: 'Group F', date: '20/06 19:00', home: 'Nederland', away: 'Zweden', predicted: '2 - 1' },
+  { group: 'Group F', date: '26/06 01:00', home: 'Japan', away: 'Zweden', predicted: '2 - 1' },
+  { group: 'Group F', date: '26/06 01:00', home: 'Tunesië', away: 'Nederland', predicted: '0 - 2' },
+  { group: 'Group G', date: '15/06 21:00', home: 'België', away: 'Egypte', predicted: '1 - 1' },
+  { group: 'Group G', date: '16/06 03:00', home: 'Iran', away: 'Nieuw-Zeeland', predicted: '2 - 0' },
+  { group: 'Group G', date: '21/06 21:00', home: 'België', away: 'Iran', predicted: '2 - 1' },
+  { group: 'Group G', date: '22/06 03:00', home: 'Nieuw-Zeeland', away: 'Egypte', predicted: '0 - 2' },
+  { group: 'Group G', date: '27/06 05:00', home: 'Egypte', away: 'Iran', predicted: '1 - 1' },
+  { group: 'Group G', date: '27/06 05:00', home: 'Nieuw-Zeeland', away: 'België', predicted: '0 - 3' },
+  { group: 'Group H', date: '15/06 18:00', home: 'Spanje', away: 'Kaapverdië', predicted: '3 - 0' },
+  { group: 'Group H', date: '16/06 00:00', home: 'Saoedi-Arabië', away: 'Uruguay', predicted: '0 - 2' },
+  { group: 'Group H', date: '21/06 18:00', home: 'Spanje', away: 'Saoedi-Arabië', predicted: '2 - 0' },
+  { group: 'Group H', date: '22/06 00:00', home: 'Uruguay', away: 'Kaapverdië', predicted: '2 - 0' },
+  { group: 'Group H', date: '27/06 02:00', home: 'Kaapverdië', away: 'Saoedi-Arabië', predicted: '0 - 1' },
+  { group: 'Group H', date: '27/06 02:00', home: 'Uruguay', away: 'Spanje', predicted: '1 - 1' },
+  { group: 'Group I', date: '16/06 21:00', home: 'Frankrijk', away: 'Senegal', predicted: '1 - 1' },
+  { group: 'Group I', date: '17/06 00:00', home: 'Irak', away: 'Noorwegen', predicted: '0 - 2' },
+  { group: 'Group I', date: '22/06 23:00', home: 'Frankrijk', away: 'Irak', predicted: '3 - 0' },
+  { group: 'Group I', date: '23/06 02:00', home: 'Noorwegen', away: 'Senegal', predicted: '2 - 1' },
+  { group: 'Group I', date: '26/06 21:00', home: 'Noorwegen', away: 'Frankrijk', predicted: '0 - 2' },
+  { group: 'Group I', date: '26/06 21:00', home: 'Senegal', away: 'Irak', predicted: '2 - 0' },
+  { group: 'Group J', date: '16/06 06:00', home: 'Oostenrijk', away: 'Jordanië', predicted: '2 - 0' },
+  { group: 'Group J', date: '17/06 03:00', home: 'Argentinië', away: 'Algerije', predicted: '2 - 0' },
+  { group: 'Group J', date: '22/06 19:00', home: 'Argentinië', away: 'Oostenrijk', predicted: '2 - 1' },
+  { group: 'Group J', date: '23/06 05:00', home: 'Jordanië', away: 'Algerije', predicted: '0 - 2' },
+  { group: 'Group J', date: '28/06 04:00', home: 'Algerije', away: 'Oostenrijk', predicted: '1 - 1' },
+  { group: 'Group J', date: '28/06 04:00', home: 'Jordanië', away: 'Argentinië', predicted: '0 - 3' },
+  { group: 'Group K', date: '17/06 19:00', home: 'Portugal', away: 'Congo', predicted: '3 - 0' },
+  { group: 'Group K', date: '18/06 04:00', home: 'Oezbekistan', away: 'Colombia', predicted: '1 - 1' },
+  { group: 'Group K', date: '23/06 19:00', home: 'Portugal', away: 'Oezbekistan', predicted: '2 - 0' },
+  { group: 'Group K', date: '24/06 04:00', home: 'Colombia', away: 'Congo', predicted: '2 - 0' },
+  { group: 'Group K', date: '28/06 01:30', home: 'Colombia', away: 'Portugal', predicted: '1 - 1' },
+  { group: 'Group K', date: '28/06 01:30', home: 'Congo', away: 'Oezbekistan', predicted: '0 - 1' },
+  { group: 'Group L', date: '17/06 22:00', home: 'Engeland', away: 'Kroatië', predicted: '1 - 1' },
+  { group: 'Group L', date: '18/06 01:00', home: 'Ghana', away: 'Panama', predicted: '2 - 0' },
+  { group: 'Group L', date: '23/06 22:00', home: 'Engeland', away: 'Ghana', predicted: '2 - 0' },
+  { group: 'Group L', date: '24/06 01:00', home: 'Panama', away: 'Kroatië', predicted: '0 - 2' },
+  { group: 'Group L', date: '27/06 23:00', home: 'Panama', away: 'Engeland', predicted: '0 - 3' },
+  { group: 'Group L', date: '27/06 23:00', home: 'Kroatië', away: 'Ghana', predicted: '1 - 1' }
+];
+
+const pouleKnockoutPredictions = [
+  { date: '28/06 21:00', round: 'Round of 32', predicted: 'Tsjechië - Canada' },
+  { date: '29/06 19:00', round: 'Round of 32', predicted: 'Brazilië - Japan' },
+  { date: '29/06 22:30', round: 'Round of 32', predicted: 'Duitsland - Zuid-Korea' },
+  { date: '30/06 03:00', round: 'Round of 32', predicted: 'Nederland - Marokko' },
+  { date: '30/06 19:00', round: 'Round of 32', predicted: 'Ecuador - Noorwegen' },
+  { date: '30/06 23:00', round: 'Round of 32', predicted: 'Frankrijk - Iran' },
+  { date: '01/07 03:00', round: 'Round of 32', predicted: 'Mexico - Ivoorkust' },
+  { date: '01/07 18:00', round: 'Round of 32', predicted: 'Engeland - Oezbekistan' },
+  { date: '01/07 22:00', round: 'Round of 32', predicted: 'België - Algerije' },
+  { date: '02/07 02:00', round: 'Round of 32', predicted: 'Verenigde Staten - Bosnië & Herzegovina' },
+  { date: '02/07 21:00', round: 'Round of 32', predicted: 'Spanje - Oostenrijk' },
+  { date: '03/07 01:00', round: 'Round of 32', predicted: 'Colombia - Kroatië' },
+  { date: '03/07 05:00', round: 'Round of 32', predicted: 'Zwitserland - Senegal' },
+  { date: '03/07 20:00', round: 'Round of 32', predicted: 'Turkije - Egypte' },
+  { date: '04/07 00:00', round: 'Round of 32', predicted: 'Argentinië - Uruguay' },
+  { date: '04/07 03:30', round: 'Round of 32', predicted: 'Portugal - Ghana' },
+  { date: '04/07 19:00', round: 'Round of 16', predicted: 'Canada - Nederland' },
+  { date: '04/07 23:00', round: 'Round of 16', predicted: 'Duitsland - Frankrijk' },
+  { date: '05/07 22:00', round: 'Round of 16', predicted: 'Brazilië - Noorwegen' },
+  { date: '06/07 02:00', round: 'Round of 16', predicted: 'Mexico - Engeland' },
+  { date: '06/07 21:00', round: 'Round of 16', predicted: 'Colombia - Spanje' },
+  { date: '07/07 02:00', round: 'Round of 16', predicted: 'Verenigde Staten - België' },
+  { date: '07/07 18:00', round: 'Round of 16', predicted: 'Argentinië - Turkije' },
+  { date: '07/07 22:00', round: 'Round of 16', predicted: 'Zwitserland - Portugal' },
+  { date: '09/07 22:00', round: 'Quarterfinal', predicted: 'Frankrijk - Nederland' },
+  { date: '10/07 21:00', round: 'Quarterfinal', predicted: 'Spanje - België' },
+  { date: '11/07 23:00', round: 'Quarterfinal', predicted: 'Brazilië - Engeland' },
+  { date: '12/07 03:00', round: 'Quarterfinal', predicted: 'Argentinië - Portugal' },
+  { date: '14/07 21:00', round: 'Semifinal', predicted: 'Frankrijk - Spanje' },
+  { date: '15/07 21:00', round: 'Semifinal', predicted: 'Engeland - Argentinië' },
+  { date: '18/07 23:00', round: 'Third place', predicted: 'Frankrijk - Argentinië' },
+  { date: '19/07 21:00', round: 'Final', predicted: 'Spanje - Engeland' }
+];
+
+const pouleBonusPredictions = [
+  ['World Cup winner', 'Spanje'],
+  ['Earliest goal', '2nd minute'],
+  ['Red cards', '17'],
+  ['Penalties after a foul', '25'],
+  ['Best host country', 'Verenigde Staten'],
+  ['Total World Cup goals', '292'],
+  ['Most goals scored by', 'Spanje'],
+  ['Fewest goals conceded by', 'Frankrijk'],
+  ['Best goalkeeper', 'Mike Maignan'],
+  ['Top scorer', 'Kylian Mbappé'],
+  ['Netherlands finish', 'Quarterfinal']
+];
+
+function normalizePouleName(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/&/g, 'en')
+    .replace(/czechia/g, 'tsjechie')
+    .replace(/czech republic/g, 'tsjechie')
+    .replace(/south africa/g, 'zuid afrika')
+    .replace(/south korea/g, 'zuid korea')
+    .replace(/netherlands/g, 'nederland')
+    .replace(/united states/g, 'verenigde staten')
+    .replace(/usa/g, 'verenigde staten')
+    .replace(/united states of america/g, 'verenigde staten')
+    .replace(/bosnia and herzegovina/g, 'bosnie en herzegovina')
+    .replace(/bosnie herzogovina/g, 'bosnie en herzegovina')
+    .replace(/bosnie & herzegovina/g, 'bosnie en herzegovina')
+    .replace(/saudi arabia/g, 'saoedi arabie')
+    .replace(/new zealand/g, 'nieuw zeeland')
+    .replace(/ivory coast/g, 'ivoorkust')
+    .replace(/cape verde/g, 'kaapverdie')
+    .replace(/dr congo/g, 'congo')
+    .replace(/congo dr/g, 'congo')
+    .replace(/uzbekistan/g, 'oezbekistan')
+    .replace(/haiti/g, 'haiti')
+    .replace(/curacao/g, 'curacao')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function pouleMatchKey(home, away) {
+  return `${normalizePouleName(home)}|${normalizePouleName(away)}`;
+}
+
+function pouleDateKey(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Amsterdam',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(date);
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${map.day}/${map.month} ${map.hour}:${map.minute}`;
+}
+
+function pouleActualLabel(match, options = {}) {
+  if (!match) return options.unknown || 'Not known yet';
+  const teams = `${match.homeTeam || 'TBD'} - ${match.awayTeam || 'TBD'}`;
+  if (match.state === 'played' || match.state === 'live') {
+    const score = `${match.homeGoals ?? '-'} - ${match.awayGoals ?? '-'}`;
+    return options.teamsOnly ? `${teams}, ${score}` : score;
+  }
+  return options.teamsOnly ? teams : 'Not played yet';
+}
+
+function buildPouleIndexes(matches) {
+  const byTeam = new Map();
+  const byDate = new Map();
+  for (const match of matches) {
+    byTeam.set(pouleMatchKey(match.homeTeam, match.awayTeam), { match, reversed: false });
+    byTeam.set(pouleMatchKey(match.awayTeam, match.homeTeam), { match, reversed: true });
+    const key = pouleDateKey(match.date);
+    if (!key) continue;
+    if (!byDate.has(key)) byDate.set(key, []);
+    byDate.get(key).push(match);
+  }
+  return { byTeam, byDate };
+}
+
+function renderPouleTable(headers, rows) {
+  return `<div class="poule-table-wrap"><table class="poule-table">
+    <thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.join('')}</tbody>
+  </table></div>`;
+}
+
+function renderGroupPredictionRows(predictions, byTeam) {
+  return predictions.map((prediction) => {
+    const actualEntry = byTeam.get(pouleMatchKey(prediction.home, prediction.away));
+    const actual = actualEntry ? actualEntry.match : null;
+    const actualClass = actual && (actual.state === 'played' || actual.state === 'live') ? 'is-known' : 'is-pending';
+    let reality = pouleActualLabel(actual);
+    if (actual && actualEntry && actualEntry.reversed && (actual.state === 'played' || actual.state === 'live')) {
+      reality = `${actual.awayGoals ?? '-'} - ${actual.homeGoals ?? '-'}`;
+    }
+    return `<tr>
+      <td data-label="Date">${escapeHtml(prediction.date)}</td>
+      <td data-label="Match"><strong>${escapeHtml(prediction.home)} - ${escapeHtml(prediction.away)}</strong></td>
+      <td data-label="Predicted">${escapeHtml(prediction.predicted)}</td>
+      <td data-label="Reality"><span class="poule-reality ${actualClass}">${escapeHtml(reality)}</span></td>
+    </tr>`;
+  });
+}
+
+function renderKnockoutPredictionRows(predictions, byDate) {
+  const usedByDate = new Map();
+  return predictions.map((prediction) => {
+    const candidates = byDate.get(prediction.date) || [];
+    const used = usedByDate.get(prediction.date) || 0;
+    const actual = candidates[used] || null;
+    usedByDate.set(prediction.date, used + 1);
+    const actualClass = actual && actual.homeTeam !== 'Nog onbekend' && actual.awayTeam !== 'Nog onbekend' ? 'is-known' : 'is-pending';
+    return `<tr>
+      <td data-label="Date">${escapeHtml(prediction.date)}</td>
+      <td data-label="Round">${escapeHtml(prediction.round)}</td>
+      <td data-label="Predicted"><strong>${escapeHtml(prediction.predicted)}</strong></td>
+      <td data-label="Reality"><span class="poule-reality ${actualClass}">${escapeHtml(pouleActualLabel(actual, { teamsOnly: true, unknown: 'Not known yet' }))}</span></td>
+    </tr>`;
+  });
+}
+
+function renderPouleBonus() {
+  const box = $('#poule-bonus');
+  if (!box) return;
+  box.innerHTML = `<div class="bonus-grid">${pouleBonusPredictions.map(([label, value]) => `
+    <article class="bonus-card">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </article>
+  `).join('')}</div>`;
+}
+
+async function initPoule() {
+  const loading = $('#poule-loading');
+  const error = $('#poule-error');
+  const status = $('#poule-status');
+  const source = $('#poule-source-info');
+  const groupSection = $('#poule-group-section');
+  const knockoutSection = $('#poule-knockout-section');
+  const groupBox = $('#poule-groups');
+  const knockoutBox = $('#poule-knockouts');
+
+  renderPouleBonus();
+
+  try {
+    const data = await request('/matches');
+    const matches = data.matches || [];
+    const indexes = buildPouleIndexes(matches);
+
+    const grouped = pouleGroupPredictions.reduce((acc, item) => {
+      if (!acc[item.group]) acc[item.group] = [];
+      acc[item.group].push(item);
+      return acc;
+    }, {});
+
+    groupBox.innerHTML = Object.entries(grouped).map(([group, predictions]) => `
+      <article class="poule-card">
+        <h3>${escapeHtml(group)}</h3>
+        ${renderPouleTable(['Date', 'Match', 'Predicted', 'Reality'], renderGroupPredictionRows(predictions, indexes.byTeam))}
+      </article>
+    `).join('');
+
+    knockoutBox.innerHTML = `<article class="poule-card">
+      ${renderPouleTable(['Date', 'Round', 'Predicted', 'Reality'], renderKnockoutPredictionRows(pouleKnockoutPredictions, indexes.byDate))}
+    </article>`;
+
+    loading.hidden = true;
+    groupSection.hidden = false;
+    knockoutSection.hidden = false;
+    status.textContent = `Reality loaded for ${matches.length} matches`;
+    if (source) {
+      source.textContent = `${data.sourceLabel || 'WK scoreprovider'}${data.cached ? ' · from cache' : ' · just fetched'}`;
+      source.hidden = false;
+    }
+  } catch (err) {
+    loading.hidden = true;
+    error.textContent = err.message;
+    error.hidden = false;
+    status.textContent = 'Reality could not be loaded';
+  }
+}
+
+if (page === 'poule') initPoule();
