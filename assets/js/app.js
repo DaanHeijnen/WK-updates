@@ -555,19 +555,66 @@ async function initMatches() {
   const sourceInfo = $('#matches-source-info');
   let didInitialScroll = false;
   let isLoading = false;
+  let lastMatches = [];
+  let lastTodayKey = null;
+
+  const LIVE_REFRESH_MS = 60000;
+  const PRE_MATCH_REFRESH_WINDOW_MS = 10 * 60 * 1000;
+
+  const getRefreshPlan = (matches, todayKey) => {
+    const now = Date.now();
+    const todayMatches = matches.filter((match) => match.dateKey === todayKey);
+    const hasLive = todayMatches.some((match) => match.state === 'live');
+
+    if (hasLive) {
+      return {
+        delay: LIVE_REFRESH_MS,
+        shouldRefreshOnVisible: true,
+        label: ' · live refresh elke 60 sec'
+      };
+    }
+
+    const upcomingToday = todayMatches
+      .filter((match) => match.state === 'upcoming')
+      .map((match) => ({ match, time: new Date(match.date).getTime() }))
+      .filter((entry) => Number.isFinite(entry.time) && entry.time > 0)
+      .sort((a, b) => a.time - b.time);
+
+    if (!upcomingToday.length) {
+      return { delay: null, shouldRefreshOnVisible: false, label: ' · geen live refresh nodig' };
+    }
+
+    const next = upcomingToday[0];
+    const msUntilKickoff = next.time - now;
+
+    if (msUntilKickoff <= PRE_MATCH_REFRESH_WINDOW_MS) {
+      return {
+        delay: LIVE_REFRESH_MS,
+        shouldRefreshOnVisible: true,
+        label: ' · checkt vanaf nu elke 60 sec'
+      };
+    }
+
+    const startPollingAt = next.time - PRE_MATCH_REFRESH_WINDOW_MS;
+    const delayUntilWindow = Math.max(startPollingAt - now, 0);
+
+    return {
+      delay: delayUntilWindow,
+      shouldRefreshOnVisible: false,
+      label: ` · refresh start rond ${formatMatchTime(startPollingAt)}`
+    };
+  };
 
   const scheduleNextRefresh = (matches, todayKey, loadMatches) => {
     stopMatchesPolling();
     if (document.hidden) return;
 
-    const hasLive = matches.some((match) => match.state === 'live');
-    const hasUpcomingToday = matches.some((match) => match.dateKey === todayKey && match.state === 'upcoming');
-    const delay = hasLive ? 60000 : hasUpcomingToday ? 300000 : null;
-    if (!delay) return;
+    const plan = getRefreshPlan(matches, todayKey);
+    if (!plan.delay) return;
 
     matchesPollTimeout = window.setTimeout(() => {
       loadMatches({ silent: true, forceFresh: true });
-    }, delay);
+    }, plan.delay);
   };
 
   const loadMatches = async (options = {}) => {
@@ -588,17 +635,15 @@ async function initMatches() {
       startLastUpdatedCounter(new Date().toISOString());
 
       if (sourceInfo) {
-        const hasLive = matches.some((match) => match.state === 'live');
-        const hasUpcomingToday = matches.some((match) => match.dateKey === todayKey && match.state === 'upcoming');
-        const refreshText = hasLive
-          ? ' · live refresh elke 60 sec'
-          : hasUpcomingToday
-            ? ' · checkt vandaag elke 5 min'
-            : ' · geen live refresh nodig';
+        const refreshPlan = getRefreshPlan(matches, todayKey);
+        const refreshText = refreshPlan.label;
         const warning = data.warning ? ` Laatst bekende data wordt getoond: ${data.warning}` : '';
         sourceInfo.textContent = `${data.sourceLabel || 'WK scoreprovider'}${data.cached ? ' · uit cache' : ' · net opgehaald'}${refreshText}${warning}`;
         sourceInfo.hidden = false;
       }
+
+      lastMatches = matches;
+      lastTodayKey = todayKey;
 
       const today = matches.filter((match) => match.dateKey === todayKey);
       const played = matches.filter((match) => match.state === 'played' && match.dateKey !== todayKey).reverse();
@@ -648,7 +693,14 @@ async function initMatches() {
       stopMatchesPolling();
       return;
     }
-    loadMatches({ silent: true, forceFresh: true });
+
+    const plan = getRefreshPlan(lastMatches, lastTodayKey);
+    if (plan.shouldRefreshOnVisible) {
+      loadMatches({ silent: true, forceFresh: true });
+      return;
+    }
+
+    scheduleNextRefresh(lastMatches, lastTodayKey, loadMatches);
   });
 
   loadMatches();
