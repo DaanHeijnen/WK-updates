@@ -878,6 +878,90 @@ function pouleActualLabel(match, options = {}) {
   return options.teamsOnly ? teams : 'Not played yet';
 }
 
+function parsePouleScore(value) {
+  const match = /(-?\d+)\s*-\s*(-?\d+)/.exec(String(value || ''));
+  if (!match) return null;
+  return { home: Number(match[1]), away: Number(match[2]) };
+}
+
+function pouleOutcome(homeGoals, awayGoals) {
+  if (homeGoals > awayGoals) return 'home';
+  if (homeGoals < awayGoals) return 'away';
+  return 'draw';
+}
+
+function isPlayedWithScore(match) {
+  return match
+    && match.state === 'played'
+    && Number.isFinite(Number(match.homeGoals))
+    && Number.isFinite(Number(match.awayGoals));
+}
+
+function renderPoulePoints(points) {
+  if (points === null || points === undefined) return '<span class="poule-points is-pending">-</span>';
+  return `<span class="poule-points is-known">${points}</span>`;
+}
+
+function calculateGroupPredictionPoints(prediction, actual, reversed = false) {
+  if (!isPlayedWithScore(actual)) return null;
+  const predicted = parsePouleScore(prediction.predicted);
+  if (!predicted) return null;
+
+  const actualHome = reversed ? Number(actual.awayGoals) : Number(actual.homeGoals);
+  const actualAway = reversed ? Number(actual.homeGoals) : Number(actual.awayGoals);
+
+  if (predicted.home === actualHome && predicted.away === actualAway) return 10;
+
+  let points = 0;
+  if (pouleOutcome(predicted.home, predicted.away) === pouleOutcome(actualHome, actualAway)) points += 5;
+  if (predicted.home === actualHome) points += 2;
+  if (predicted.away === actualAway) points += 2;
+  return points;
+}
+
+function splitPouleTeams(value) {
+  const parts = String(value || '').split(/\s+-\s+/);
+  if (parts.length < 2) return [];
+  return [parts[0].trim(), parts.slice(1).join(' - ').trim()].filter(Boolean);
+}
+
+function isKnownPouleTeam(value) {
+  const normalized = normalizePouleName(value);
+  if (!normalized) return false;
+  return !['nog onbekend', 'tbd', 'unknown', 'not known yet'].includes(normalized);
+}
+
+const pouleKnockoutPointRules = {
+  'Round of 32': { team: 10, match: 15 },
+  'Round of 16': { team: 15, match: 20 },
+  'Quarterfinal': { team: 20, match: 25 },
+  'Semifinal': { team: 25, match: 30 },
+  'Third place': { team: 30, match: 65 },
+  'Final': { team: 40, match: 85 }
+};
+
+function calculateKnockoutPredictionPoints(prediction, actual) {
+  if (!isPlayedWithScore(actual)) return null;
+  if (!isKnownPouleTeam(actual.homeTeam) || !isKnownPouleTeam(actual.awayTeam)) return null;
+
+  const rules = pouleKnockoutPointRules[prediction.round];
+  if (!rules) return null;
+
+  const predictedTeams = splitPouleTeams(prediction.predicted).map(normalizePouleName);
+  const actualTeams = [actual.homeTeam, actual.awayTeam].map(normalizePouleName);
+  if (predictedTeams.length !== 2 || actualTeams.length !== 2) return null;
+
+  let points = 0;
+  const firstCorrect = actualTeams.includes(predictedTeams[0]);
+  const secondCorrect = actualTeams.includes(predictedTeams[1]);
+
+  if (firstCorrect) points += rules.team;
+  if (secondCorrect) points += rules.team;
+  if (firstCorrect && secondCorrect) points += rules.match;
+
+  return points;
+}
+
 function buildPouleIndexes(matches) {
   const byTeam = new Map();
   const byDate = new Map();
@@ -908,11 +992,13 @@ function renderGroupPredictionRows(predictions, byTeam) {
     if (actual && actualEntry && actualEntry.reversed && (actual.state === 'played' || actual.state === 'live')) {
       reality = `${actual.awayGoals ?? '-'} - ${actual.homeGoals ?? '-'}`;
     }
+    const points = calculateGroupPredictionPoints(prediction, actual, Boolean(actualEntry && actualEntry.reversed));
     return `<tr>
       <td data-label="Date">${escapeHtml(prediction.date)}</td>
       <td data-label="Match"><strong>${escapeHtml(prediction.home)} - ${escapeHtml(prediction.away)}</strong></td>
       <td data-label="Predicted">${escapeHtml(prediction.predicted)}</td>
       <td data-label="Reality"><span class="poule-reality ${actualClass}">${escapeHtml(reality)}</span></td>
+      <td data-label="Points">${renderPoulePoints(points)}</td>
     </tr>`;
   });
 }
@@ -924,12 +1010,14 @@ function renderKnockoutPredictionRows(predictions, byDate) {
     const used = usedByDate.get(prediction.date) || 0;
     const actual = candidates[used] || null;
     usedByDate.set(prediction.date, used + 1);
-    const actualClass = actual && actual.homeTeam !== 'Nog onbekend' && actual.awayTeam !== 'Nog onbekend' ? 'is-known' : 'is-pending';
+    const actualClass = actual && isKnownPouleTeam(actual.homeTeam) && isKnownPouleTeam(actual.awayTeam) ? 'is-known' : 'is-pending';
+    const points = calculateKnockoutPredictionPoints(prediction, actual);
     return `<tr>
       <td data-label="Date">${escapeHtml(prediction.date)}</td>
       <td data-label="Round">${escapeHtml(prediction.round)}</td>
       <td data-label="Predicted"><strong>${escapeHtml(prediction.predicted)}</strong></td>
       <td data-label="Reality"><span class="poule-reality ${actualClass}">${escapeHtml(pouleActualLabel(actual, { teamsOnly: true, unknown: 'Not known yet' }))}</span></td>
+      <td data-label="Points">${renderPoulePoints(points)}</td>
     </tr>`;
   });
 }
@@ -971,12 +1059,12 @@ async function initPoule() {
     groupBox.innerHTML = Object.entries(grouped).map(([group, predictions]) => `
       <article class="poule-card">
         <h3>${escapeHtml(group)}</h3>
-        ${renderPouleTable(['Date', 'Match', 'Predicted', 'Reality'], renderGroupPredictionRows(predictions, indexes.byTeam))}
+        ${renderPouleTable(['Date', 'Match', 'Predicted', 'Reality', 'Points'], renderGroupPredictionRows(predictions, indexes.byTeam))}
       </article>
     `).join('');
 
     knockoutBox.innerHTML = `<article class="poule-card">
-      ${renderPouleTable(['Date', 'Round', 'Predicted', 'Reality'], renderKnockoutPredictionRows(pouleKnockoutPredictions, indexes.byDate))}
+      ${renderPouleTable(['Date', 'Round', 'Predicted', 'Reality', 'Points'], renderKnockoutPredictionRows(pouleKnockoutPredictions, indexes.byDate))}
     </article>`;
 
     loading.hidden = true;

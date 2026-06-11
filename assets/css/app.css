@@ -1160,3 +1160,24 @@ img { max-width: 100%; height: auto; }
     grid-template-columns: 1fr;
   }
 }
+
+.poule-points {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-weight: 900;
+}
+
+.poule-points.is-known {
+  background: var(--orange);
+  color: #fff;
+}
+
+.poule-points.is-pending {
+  background: #f3f3f3;
+  color: var(--muted);
+}
